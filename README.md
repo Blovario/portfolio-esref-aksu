@@ -1,36 +1,164 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portfolio Eşref Aksu
 
-## Getting Started
+Site portfolio personnel de Eşref Aksu, développeur Full Stack spécialisé en backend, frontend, dApps Solidity et prompt engineering.
 
-First, run the development server:
+## 🚀 Fonctionnalités
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Design responsive** : Optimisé mobile-first
+- **Thème sombre/clair** : Toggle avec persistance localStorage
+- **Navigation fluide** : Menu burger mobile + navigation par ancres
+- **Accessibilité** : ARIA labels, focus visible, contraste optimisé
+- **Performance** : CSS/JS optimisés, sans dépendances externes
+- **SEO** : Meta tags, Open Graph, structure sémantique
+
+## 📁 Structure
+
+```
+portfolio-frontend/
+├── index.html          # Page principale
+├── styles.css          # Styles CSS avec thème sombre
+├── script.js           # JavaScript (menu, thème, interactions)
+├── assets/
+│   └── favicon.svg     # Icône du site
+├── cv/
+│   └── cv-esref-aksu.pdf # CV téléchargeable
+└── README.md           # Documentation
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🎨 Personnalisation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Modifier les couleurs
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Dans `styles.css`, modifiez les variables CSS :
 
-## Learn More
+```css
+:root {
+  --accent: #6366f1; /* Couleur principale */
+  --accent-hover: #4f46e5; /* Couleur hover */
+  --bg-primary: #ffffff; /* Arrière-plan principal */
+  --text-primary: #1e293b; /* Texte principal */
+}
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Modifier les textes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Éditez directement `index.html` :
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Nom/titre** : Sections `.hero-title` et `.hero-subtitle`
+- **Description** : Section `.hero-description`
+- **Expérience** : Section `#experience`
+- **Formation** : Section `#formation`
+- **Compétences** : Section `#competences`
+- **Projets** : Section `#projets`
+- **Contact** : Section `#contact`
 
-## Deploy on Vercel
+### Ajouter un projet
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Dans `index.html`, section `#projets` :
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```html
+<div class="project-card">
+  <h3 class="project-title">Mon Nouveau Projet</h3>
+  <p class="project-description">Description du projet...</p>
+  <a
+    href="https://lien-projet.com"
+    class="project-link"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    Voir le projet
+    <svg><!-- icône externe --></svg>
+  </a>
+</div>
+```
+
+### Modifier les réseaux sociaux
+
+Dans `index.html`, section contact :
+
+```html
+<a href="https://github.com/VOTRE-USERNAME" class="social-link">
+  <a href="https://linkedin.com/in/VOTRE-USERNAME" class="social-link"></a
+></a>
+```
+
+## 🚀 Déploiement
+
+### GitHub Pages
+
+1. Poussez le code sur GitHub
+2. Allez dans Settings > Pages
+3. Sélectionnez la branche `main`
+4. Votre site sera disponible à `https://username.github.io/portfolio-frontend`
+
+### Netlify
+
+1. Connectez votre repo GitHub à Netlify
+2. Build command : laisser vide
+3. Publish directory : `/`
+4. Déployement automatique à chaque push
+
+### Vercel
+
+1. Importez votre repo GitHub sur Vercel
+2. Framework Preset : Other
+3. Build Command : laisser vide
+4. Output Directory : laisser vide
+
+## 🔧 Développement local
+
+```bash
+# Cloner le repo
+git clone https://github.com/username/portfolio-frontend.git
+cd portfolio-frontend
+
+# Servir localement (Python)
+python -m http.server 8000
+
+# Ou avec Node.js
+npx serve .
+
+# Ou avec PHP
+php -S localhost:8000
+```
+
+Ouvrez `http://localhost:8000` dans votre navigateur.
+
+## 📱 Tests
+
+### Lighthouse (Chrome DevTools)
+
+1. Ouvrir DevTools (F12)
+2. Onglet Lighthouse
+3. Lancer l'audit mobile
+4. Score attendu : ≥90 pour Performance, Accessibilité, SEO
+
+### Tests manuels
+
+- [ ] Navigation mobile (menu burger)
+- [ ] Toggle thème sombre/clair
+- [ ] Liens de navigation (ancres)
+- [ ] Téléchargement CV
+- [ ] Liens externes (GitHub, LinkedIn)
+- [ ] Responsive design (mobile, tablette, desktop)
+
+## 🎯 Optimisations incluses
+
+- **CSS** : Variables CSS, Grid/Flexbox, animations optimisées
+- **JavaScript** : Modules ES6, gestion d'erreurs, performance
+- **HTML** : Sémantique HTML5, ARIA labels, meta tags
+- **Images** : SVG optimisé, lazy loading ready
+- **Accessibilité** : Focus management, keyboard navigation
+- **Performance** : Code minifié, pas de dépendances
+
+## 📞 Support
+
+Pour toute question ou suggestion :
+
+- Email : esref.aksu.pro@gmail.com
+- GitHub : [Issues](https://github.com/username/portfolio-frontend/issues)
+
+## 📄 Licence
+
+MIT License - Libre d'utilisation et modification.
+
