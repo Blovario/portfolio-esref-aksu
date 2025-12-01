@@ -11,13 +11,22 @@
   // Theme Management
   class ThemeManager {
     constructor() {
-      this.currentTheme = localStorage.getItem("theme") || "light";
       this.init();
     }
 
     init() {
+      // Déterminer le thème initial
+      const savedTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+
+      // Utiliser le thème sauvegardé, sinon détecter la préférence système
+      this.currentTheme = savedTheme || (prefersDark ? "dark" : "light");
+
       this.applyTheme(this.currentTheme);
       this.setupEventListeners();
+      this.watchSystemTheme();
     }
 
     applyTheme(theme) {
@@ -29,6 +38,20 @@
     toggleTheme() {
       const newTheme = this.currentTheme === "light" ? "dark" : "light";
       this.applyTheme(newTheme);
+    }
+
+    watchSystemTheme() {
+      // Écouter les changements de préférence système
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+      mediaQuery.addEventListener("change", (e) => {
+        // Ne changer automatiquement que si l'utilisateur n'a pas de préférence sauvegardée
+        const savedTheme = localStorage.getItem("theme");
+        if (!savedTheme) {
+          const newTheme = e.matches ? "dark" : "light";
+          this.applyTheme(newTheme);
+        }
+      });
     }
 
     setupEventListeners() {
@@ -483,4 +506,3 @@
     });
   }
 })();
-
