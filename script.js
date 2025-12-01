@@ -293,9 +293,60 @@
       const forms = document.querySelectorAll("form");
 
       forms.forEach((form) => {
-        form.addEventListener("submit", (e) => {
-          if (!this.validateForm(form)) {
-            e.preventDefault();
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          if (this.validateForm(form)) {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.textContent;
+            const resultDiv = document.getElementById("form-result");
+
+            try {
+              submitBtn.disabled = true;
+              submitBtn.textContent = "Envoi en cours...";
+
+              const formData = new FormData(form);
+              const object = Object.fromEntries(formData);
+              const json = JSON.stringify(object);
+
+              const response = await fetch("https://api.web3forms.com/submit", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                },
+                body: json,
+              });
+
+              const jsonResponse = await response.json();
+
+              if (response.status === 200) {
+                if (resultDiv) {
+                  resultDiv.innerHTML =
+                    '<div class="success-message" style="color: #10b981; margin-bottom: 1rem; padding: 0.5rem; background: rgba(16, 185, 129, 0.1); border-radius: 4px;">Message envoyé avec succès ! Je vous répondrai très bientôt.</div>';
+                }
+                form.reset();
+              } else {
+                console.log(response);
+                if (resultDiv) {
+                  resultDiv.innerHTML =
+                    '<div class="error-message" style="color: #ef4444; margin-bottom: 1rem;">Une erreur est survenue. Veuillez réessayer.</div>';
+                }
+              }
+            } catch (error) {
+              console.log(error);
+              if (resultDiv) {
+                resultDiv.innerHTML =
+                  '<div class="error-message" style="color: #ef4444; margin-bottom: 1rem;">Une erreur est survenue. Veuillez réessayer.</div>';
+              }
+            } finally {
+              submitBtn.disabled = false;
+              submitBtn.textContent = originalBtnText;
+              setTimeout(() => {
+                if (resultDiv) {
+                  resultDiv.innerHTML = "";
+                }
+              }, 5000);
+            }
           }
         });
 
