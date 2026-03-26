@@ -290,6 +290,12 @@
         justify-content: center;
       }
 
+      .qr-box picture {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
       .qr-box-text {
         font-family: "JetBrains Mono", monospace;
         font-size: 5px;
@@ -352,7 +358,7 @@
     <div class="notice">
       <strong>Carte de visite — 85 × 55 mm</strong> (+ 3mm fond perdu)<br />
       Imprimer à <strong>100 %</strong> — ne pas ajuster à la page.<br />
-      Remplacer le placeholder QR par votre image avant impression.
+      QR code intégré pour <strong>esref-aksu.com</strong>.
     </div>
 
     <!-- ==================== RECTO ==================== -->
@@ -441,8 +447,10 @@
 
       <div class="back-right">
         <div class="qr-box">
-          <!-- REMPLACE PAR : <img src="ton-qr-code.png" alt="QR Code" /> -->
-          <span class="qr-box-text">QR Code<br />ici</span>
+          <picture>
+            <source srcset="qr-esref-aksu.svg" type="image/svg+xml" />
+            <img src="qr-esref-aksu.png" alt="QR Code vers esref-aksu.com" />
+          </picture>
         </div>
         <span class="qr-url">esref-aksu.com</span>
       </div>
