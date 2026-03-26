@@ -17,12 +17,7 @@
     init() {
       // Déterminer le thème initial
       const savedTheme = localStorage.getItem("theme");
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-
-      // Utiliser le thème sauvegardé, sinon détecter la préférence système
-      this.currentTheme = savedTheme || (prefersDark ? "dark" : "light");
+      this.currentTheme = savedTheme || "dark";
 
       this.applyTheme(this.currentTheme);
       this.setupEventListeners();
@@ -171,10 +166,26 @@
     init() {
       this.setupHeaderScroll();
       this.setupActiveSection();
+      this.setupReveal();
+    }
+
+    setupReveal() {
+      const elements = document.querySelectorAll("[data-reveal]");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: "0px 0px -30px 0px" }
+      );
+      elements.forEach((el) => observer.observe(el));
     }
 
     setupHeaderScroll() {
-      let lastScrollTop = 0;
       const header = document.querySelector(".header");
 
       window.addEventListener("scroll", () => {
@@ -188,7 +199,6 @@
           header.style.boxShadow = "none";
         }
 
-        lastScrollTop = scrollTop;
       });
     }
 
@@ -317,7 +327,7 @@
                 body: json,
               });
 
-              const jsonResponse = await response.json();
+              await response.json();
 
               if (response.status === 200) {
                 if (resultDiv) {
@@ -543,17 +553,4 @@
     init();
   }
 
-  // Service Worker registration (for PWA features if needed)
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => {
-          console.log("SW enregistré:", registration);
-        })
-        .catch((registrationError) => {
-          console.log("Échec enregistrement SW:", registrationError);
-        });
-    });
-  }
 })();
