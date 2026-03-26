@@ -744,8 +744,32 @@ p {
     --header-h: 60px;
   }
 
+  .header {
+    position: static;
+    width: auto;
+    height: 0;
+    background: transparent;
+    border-bottom: 0;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .nav {
+    height: auto;
+  }
+
+  .nav-logo,
+  .theme-toggle {
+    display: none;
+  }
+
   .section {
     padding: 4rem 0;
+  }
+
+  .hero {
+    min-height: calc(100vh - 64px);
+    padding-top: 0;
   }
 
   /* Bottom tab bar on mobile */
