@@ -149,22 +149,41 @@
       }
 
       .front-tagline {
-        font-size: 8.5px;
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        font-size: 8px;
         font-weight: 500;
-        letter-spacing: 2px;
+        letter-spacing: 1.35px;
         text-transform: uppercase;
       }
+
+      .front-tagline .tag-item {
+        flex-shrink: 0;
+      }
+
       .front-tagline .tag-sep {
-        color: var(--text-muted);
+        width: 1.15mm;
+        height: 1.15mm;
+        border-radius: 50%;
+        background: var(--text-muted);
+        display: inline-block;
+        margin: 0 0.8mm;
+        transform: translateY(0mm);
+        flex-shrink: 0;
+      }
+
+      .front-bottom {
+        width: 100%;
       }
       .front-tagline .tag-blue {
-        color: #3382b7;
+        color: var(--white);
       }
       .front-tagline .tag-white {
         color: var(--white);
       }
       .front-tagline .tag-red {
-        color: #ef4135;
+        color: var(--white);
       }
 
       .front::after {
@@ -281,6 +300,17 @@
         letter-spacing: 0.1px;
       }
 
+      .contact-dot {
+        width: 1.1mm;
+        height: 1.1mm;
+        border-radius: 50%;
+        background: var(--text-muted);
+        display: inline-block;
+        margin: 0 1.05mm;
+        vertical-align: middle;
+        transform: translateY(-0.1mm);
+      }
+
       .back-right {
         display: flex;
         flex-direction: column;
@@ -385,11 +415,11 @@
       </div>
       <div class="front-bottom">
         <span class="front-tagline"
-          ><span class="tag-blue">Sites web</span
-          ><span class="tag-sep"> · </span
-          ><span class="tag-white">Applications</span
-          ><span class="tag-sep"> · </span
-          ><span class="tag-red">Automatisation</span></span
+          ><span class="tag-blue tag-item">Sites web</span
+          ><span class="tag-sep" aria-hidden="true"></span
+          ><span class="tag-white tag-item">Applications</span
+          ><span class="tag-sep" aria-hidden="true"></span
+          ><span class="tag-red tag-item">Automatisation</span></span
         >
       </div>
     </div>
@@ -455,7 +485,10 @@
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
-            <span class="contact-text">Vendôme · Toute la France</span>
+            <span class="contact-text"
+              >Vendôme<span class="contact-dot" aria-hidden="true"></span
+              >Toute la France</span
+            >
           </div>
         </div>
       </div>
