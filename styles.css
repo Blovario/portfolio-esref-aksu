@@ -333,9 +333,14 @@ p {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-muted);
   margin-bottom: 1.25rem;
 }
+.hero-tagline .tag-sep {
+  color: var(--text-muted);
+}
+.hero-tagline .tag-blue  { color: #3382b7; }
+.hero-tagline .tag-white { color: var(--text); }
+.hero-tagline .tag-red   { color: #ef4135; }
 
 .hero-location {
   font-size: 0.92rem;
