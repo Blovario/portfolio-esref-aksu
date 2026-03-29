@@ -1,4 +1,49 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="32" height="32" rx="6" fill="#7ab540"/>
-  <text x="16" y="22" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle" fill="#0e1410">EA</text>
+<svg
+  width="32"
+  height="32"
+  viewBox="0 0 32 32"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <rect width="32" height="32" rx="8" fill="#1C1F1D" />
+  <rect
+    x="0.5"
+    y="0.5"
+    width="31"
+    height="31"
+    rx="7.5"
+    stroke="rgba(122, 181, 64, 0.24)"
+  />
+  <path
+    d="M6 11.5V8.5H9"
+    stroke="rgba(122, 181, 64, 0.5)"
+    stroke-width="1.25"
+    stroke-linecap="round"
+  />
+  <path
+    d="M26 20.5V23.5H23"
+    stroke="rgba(122, 181, 64, 0.5)"
+    stroke-width="1.25"
+    stroke-linecap="round"
+  />
+  <text
+    x="8.1"
+    y="21.1"
+    fill="#EEF3EF"
+    font-family="'JetBrains Mono', 'Fira Code', monospace"
+    font-size="13"
+    font-weight="700"
+  >
+    E
+  </text>
+  <text
+    x="15.9"
+    y="21.1"
+    fill="#7AB540"
+    font-family="'JetBrains Mono', 'Fira Code', monospace"
+    font-size="13"
+    font-weight="700"
+  >
+    A
+  </text>
 </svg>
