@@ -20,6 +20,122 @@
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://esref-aksu.com" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="Esref Aksu" />
+    <meta
+      property="og:image"
+      content="https://esref-aksu.com/assets/og-image.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta
+      property="og:image:alt"
+      content="Esref Aksu — Ingénieur &amp; Développeur Freelance. Sites web, applications métier et automatisations."
+    />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Esref Aksu — Développeur Full Stack Freelance"
+    />
+    <meta
+      name="twitter:description"
+      content="Développeur web freelance spécialisé en Node.js, TypeScript, Vue.js, Next.js et automatisation de processus métiers."
+    />
+    <meta
+      name="twitter:image"
+      content="https://esref-aksu.com/assets/og-image.jpg"
+    />
+
+    <link rel="canonical" href="https://esref-aksu.com/" />
+    <meta name="theme-color" content="#1c1f1d" />
+
+    <!-- Données structurées (schema.org / JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "ProfessionalService",
+            "@id": "https://esref-aksu.com/#entreprise",
+            "name": "Esref Aksu",
+            "legalName": "Esref Aksu — Entrepreneur individuel",
+            "description": "Développeur Full Stack freelance : sites web, applications métier sur-mesure, intégration d'outils et automatisation de processus.",
+            "url": "https://esref-aksu.com",
+            "logo": "https://esref-aksu.com/assets/favicon.svg",
+            "email": "contact@esref-aksu.com",
+            "telephone": "+33767674489",
+            "founder": { "@id": "https://esref-aksu.com/#esref" },
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "1 rue Marguerin",
+              "postalCode": "75014",
+              "addressLocality": "Paris",
+              "addressCountry": "FR"
+            },
+            "areaServed": [
+              { "@type": "City", "name": "Vendôme" },
+              { "@type": "Country", "name": "France" }
+            ],
+            "identifier": [
+              {
+                "@type": "PropertyValue",
+                "name": "SIRET",
+                "value": "99222803100025"
+              },
+              {
+                "@type": "PropertyValue",
+                "name": "SIREN",
+                "value": "992228031"
+              },
+              {
+                "@type": "PropertyValue",
+                "name": "APE",
+                "value": "62.01Z"
+              }
+            ],
+            "knowsAbout": [
+              "TypeScript",
+              "JavaScript",
+              "Node.js",
+              "Next.js",
+              "Vue.js",
+              "NestJS",
+              "Python",
+              "Solidity",
+              "PostgreSQL",
+              "MongoDB",
+              "Docker",
+              "Strapi",
+              "WooCommerce"
+            ]
+          },
+          {
+            "@type": "Person",
+            "@id": "https://esref-aksu.com/#esref",
+            "name": "Esref Aksu",
+            "jobTitle": "Ingénieur & Développeur Full Stack Freelance",
+            "url": "https://esref-aksu.com",
+            "email": "contact@esref-aksu.com",
+            "worksFor": { "@id": "https://esref-aksu.com/#entreprise" },
+            "sameAs": [
+              "https://github.com/Blovario",
+              "https://linkedin.com/in/esref-aksu"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://esref-aksu.com/#site",
+            "url": "https://esref-aksu.com",
+            "name": "Esref Aksu — Développeur Full Stack Freelance",
+            "inLanguage": "fr-FR",
+            "publisher": { "@id": "https://esref-aksu.com/#entreprise" }
+          }
+        ]
+      }
+    </script>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
@@ -28,7 +144,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
 
@@ -315,6 +431,23 @@
           <div class="projects-grid">
             <!-- Vendevoo -->
             <div class="project-card project-featured" data-reveal>
+              <a
+                href="https://vendevoo.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="project-shot"
+                tabindex="-1"
+                aria-hidden="true"
+              >
+                <img
+                  src="assets/projets/vendevoo.webp"
+                  width="1200"
+                  height="750"
+                  loading="lazy"
+                  decoding="async"
+                  alt=""
+                />
+              </a>
               <div class="project-top">
                 <span class="project-type">// Client — SaaS Immobilier</span>
                 <a
@@ -341,6 +474,23 @@
 
             <!-- Mon Carnet Client -->
             <div class="project-card project-featured" data-reveal>
+              <a
+                href="https://moncarnetclient.fr"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="project-shot"
+                tabindex="-1"
+                aria-hidden="true"
+              >
+                <img
+                  src="assets/projets/mon-carnet-client.webp"
+                  width="1200"
+                  height="750"
+                  loading="lazy"
+                  decoding="async"
+                  alt=""
+                />
+              </a>
               <div class="project-top">
                 <span class="project-type">// Personnel — SaaS Fidélité</span>
                 <a
@@ -368,6 +518,23 @@
 
             <!-- La Cabane à Mousse -->
             <div class="project-card project-featured" data-reveal>
+              <a
+                href="https://lacabaneamousse-vendome.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="project-shot"
+                tabindex="-1"
+                aria-hidden="true"
+              >
+                <img
+                  src="assets/projets/la-cabane-a-mousse.webp"
+                  width="1200"
+                  height="750"
+                  loading="lazy"
+                  decoding="async"
+                  alt=""
+                />
+              </a>
               <div class="project-top">
                 <span class="project-type"
                   >// Client — Bar &amp; Restaurant</span

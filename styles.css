@@ -3,11 +3,16 @@
    Aligned with the business card visual language
    =================================================== */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+/* Les polices sont chargées via <link> dans le <head> (pas d'@import :
+   il est bloquant et provoquait un double téléchargement). */
 
 :root {
   --green: #7ab540;
   --green-bright: #96d458;
+  /* Verts réservés au TEXTE : redéfinis en thème clair pour rester lisibles.
+     --green / --green-bright restent réservés aux fonds, bordures et icônes. */
+  --green-text: #7ab540;
+  --green-text-strong: #96d458;
   --green-line: rgba(122, 181, 64, 0.18);
   --green-dim: rgba(122, 181, 64, 0.1);
   --green-glow: rgba(122, 181, 64, 0.2);
@@ -15,7 +20,7 @@
   --text: #cdd8ce;
   --text-strong: #eef3ef;
   --text-muted: #8d9c8f;
-  --text-soft: #637265;
+  --text-soft: #7b8b7d;
   --amber: #d3a05c;
   --bg: #1c1f1d;
   --bg-2: #181b19;
@@ -42,7 +47,11 @@
   --text: #344538;
   --text-strong: #172018;
   --text-muted: #5f7362;
-  --text-soft: #819284;
+  --text-soft: #556a58;
+  /* Verts assombris : sur fond clair, #7ab540 ne fait que 2.2:1
+     et #96d458 que 1.58:1 — bien en dessous du minimum AA de 4.5:1. */
+  --green-text: #456f22;
+  --green-text-strong: #375a18;
   --bg: #eef3ef;
   --bg-2: #e6ede7;
   --bg-surface: rgba(255, 255, 255, 0.82);
@@ -180,7 +189,7 @@ p {
 }
 
 .s-prefix {
-  color: var(--green);
+  color: var(--green-text);
   font-family: var(--mono);
   font-size: 0.76em;
   font-weight: 500;
@@ -268,7 +277,7 @@ p {
 }
 
 .logo-tag {
-  color: var(--green);
+  color: var(--green-text);
 }
 
 .nav-toggle {
@@ -312,7 +321,7 @@ p {
 }
 
 .nav-link.active {
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   background: var(--green-dim);
   box-shadow: inset 0 0 0 1px var(--green-line);
 }
@@ -336,7 +345,7 @@ p {
 }
 
 .theme-toggle:hover {
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   border-color: var(--border-strong);
   background: var(--green-dim);
   transform: translateY(-1px);
@@ -389,7 +398,7 @@ p {
 }
 
 .hero-kicker span {
-  color: var(--green);
+  color: var(--green-text);
 }
 
 .hero-shell,
@@ -507,7 +516,7 @@ p {
 }
 
 .hero-subtitle {
-  color: var(--green);
+  color: var(--green-text);
   font-family: var(--mono);
   font-size: 0.84rem;
   font-weight: 500;
@@ -609,7 +618,7 @@ p {
 
 .hero-aside-label {
   margin-bottom: 1.35rem;
-  color: var(--green);
+  color: var(--green-text);
   font-family: var(--mono);
   font-size: 0.78rem;
   font-weight: 600;
@@ -660,7 +669,7 @@ p {
 }
 
 .hero-contact-link:hover {
-  color: var(--green-bright);
+  color: var(--green-text-strong);
 }
 
 .btn {
@@ -702,7 +711,7 @@ p {
 
 .btn-ghost:hover {
   border-color: var(--border-strong);
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   background: var(--green-dim);
 }
 
@@ -717,7 +726,7 @@ p {
 }
 
 .highlight {
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   font-weight: 700;
 }
 
@@ -736,6 +745,50 @@ p {
   border-radius: var(--r-lg);
   transition: transform 0.25s ease, border-color 0.25s ease,
     box-shadow 0.25s ease;
+}
+
+/* ===================================================
+   Visuels de projet
+   Image pleine largeur en tête de carte. width/height
+   + aspect-ratio réservent la place avant chargement
+   (pas de CLS). Le lien qui l'entoure est masqué aux
+   lecteurs d'écran : il duplique .project-link, qui
+   porte déjà le nom accessible.
+   =================================================== */
+
+.project-shot {
+  display: block;
+  margin: -1.7rem -1.7rem 0.3rem;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+}
+
+.project-shot img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform 0.4s ease;
+}
+
+/* Le crochet décoratif se superposerait à l'image. */
+.project-card:has(.project-shot)::before {
+  display: none;
+}
+
+/* Sans visuel, une carte s'étirait pour égaler sa voisine illustrée
+   et se retrouvait à moitié vide. On la laisse à sa hauteur propre. */
+.projects-grid .project-card:not(:has(.project-shot)) {
+  align-self: start;
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .project-card:hover .project-shot img {
+    transform: scale(1.03);
+  }
 }
 
 .project-card:hover {
@@ -779,7 +832,7 @@ p {
 }
 
 .project-link {
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   font-size: 0.78rem;
 }
 
@@ -842,7 +895,7 @@ p {
 
 .experience-company {
   margin-bottom: 0.25rem;
-  color: var(--green-bright);
+  color: var(--green-text-strong);
 }
 
 .experience-role {
@@ -941,7 +994,7 @@ p {
 }
 
 .skill-tags li:hover {
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   border-color: var(--border-strong);
   background: var(--green-dim);
 }
@@ -987,7 +1040,7 @@ p {
 }
 
 .contact-detail-item:hover {
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   border-color: var(--border-strong);
   background: var(--green-dim);
 }
@@ -999,7 +1052,7 @@ p {
 
 .contact-detail-icon {
   min-width: 1.4rem;
-  color: var(--green);
+  color: var(--green-text);
   font-family: var(--mono);
   font-size: 0.7rem;
   font-weight: 600;
@@ -1026,7 +1079,7 @@ p {
 .business-card-kicker {
   display: block;
   margin-bottom: 0.25rem;
-  color: var(--green);
+  color: var(--green-text);
   font-family: var(--mono);
   font-size: 0.66rem;
   font-weight: 600;
@@ -1074,7 +1127,7 @@ p {
 .business-card-link {
   display: inline-flex;
   margin-top: 1rem;
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   font-family: var(--mono);
   font-size: 0.72rem;
 }
@@ -1101,7 +1154,7 @@ p {
 }
 
 .social-link:hover {
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   border-color: var(--border-strong);
   background: var(--green-dim);
 }
@@ -1166,7 +1219,7 @@ p {
 }
 
 .form-privacy a {
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   text-decoration: underline;
   text-decoration-color: var(--green-line);
   text-underline-offset: 0.2em;
@@ -1219,7 +1272,7 @@ p {
 
 .footer-link:hover,
 .footer-link:focus-visible {
-  color: var(--green-bright);
+  color: var(--green-text-strong);
 }
 
 /* Legal notice */
@@ -1234,7 +1287,7 @@ p {
 
 .legal-eyebrow {
   margin-bottom: 0.7rem;
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   font-family: var(--mono);
   font-size: 0.74rem;
   letter-spacing: 0.16em;
@@ -1310,7 +1363,7 @@ p {
 }
 
 .legal-card a {
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   overflow-wrap: anywhere;
 }
 
@@ -1329,7 +1382,7 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: var(--green-bright);
+  color: var(--green-text-strong);
   font-family: var(--mono);
   font-size: 0.78rem;
 }
@@ -1458,8 +1511,20 @@ p {
     height: 18px;
   }
 
+  /* Le libellé est masqué visuellement mais conservé dans l'arbre
+     d'accessibilité : avec display:none, les 6 liens de la barre
+     mobile n'avaient plus aucun nom accessible (icônes seules). */
   .nav-link span {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
   }
 
   .hero {
@@ -1619,4 +1684,37 @@ p {
     padding: 0.82rem 1rem;
     font-size: 0.68rem;
   }
+}
+
+/* ===================================================
+   Focus clavier — indicateur visible sur tous les
+   éléments interactifs (WCAG 2.4.7).
+   Les règles :focus-visible existantes ne changeaient
+   que la couleur, ce qui laissait plusieurs cibles
+   (boutons, liens projets, réseaux sociaux, toggle
+   thème) sans aucun repère au clavier.
+   =================================================== */
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--green-text-strong);
+  outline-offset: 3px;
+}
+
+.btn:focus-visible,
+.social-link:focus-visible,
+.project-link:focus-visible,
+.theme-toggle:focus-visible,
+.contact-detail-item:focus-visible {
+  outline: 2px solid var(--green-text-strong);
+  outline-offset: 3px;
+}
+
+.btn-primary:focus-visible {
+  outline-color: var(--text-strong);
+}
+
+.form-group input:focus-visible,
+.form-group textarea:focus-visible {
+  outline: 2px solid var(--green-text-strong);
+  outline-offset: 2px;
 }
