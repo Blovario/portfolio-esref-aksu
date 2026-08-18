@@ -9,10 +9,6 @@
   <text x="72" y="54" fill="#EEF3EF" font-family="JetBrains Mono, monospace" font-size="24" font-weight="600" letter-spacing="-1">
     <tspan fill="#7AB540">&lt;</tspan>EA<tspan fill="#7AB540">/&gt;</tspan>
   </text>
-  <text x="1128" y="52" fill="#9AA39A" font-family="JetBrains Mono, monospace" font-size="14" font-weight="500" text-anchor="end" letter-spacing="2">
-    FREELANCE · VENDÔME
-  </text>
-
   <text x="72" y="190" fill="#F5F6F1" font-family="Inter, Arial, sans-serif" font-size="70" font-weight="600" letter-spacing="-4">
     <tspan x="72" dy="0">Je construis les outils web</tspan>
     <tspan x="72" dy="82">qui font avancer</tspan>

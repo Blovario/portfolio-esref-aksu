@@ -253,11 +253,7 @@ ol {
   z-index: 1;
 }
 
-.eyebrow,
-.section-index,
 .project-kicker,
-.project-number,
-.identity-list dt,
 .project-meta span,
 .contact-details dt,
 .legal-eyebrow,
@@ -267,22 +263,6 @@ ol {
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-}
-
-.hero-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-bottom: clamp(2.25rem, 5vh, 4.25rem);
-  color: #b0b8b0;
-}
-
-.status-dot {
-  width: 0.48rem;
-  height: 0.48rem;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 0 0.25rem rgba(122, 181, 64, 0.12);
 }
 
 .hero h1 {
@@ -398,62 +378,20 @@ ol {
   letter-spacing: -0.04em;
 }
 
-.identity-list > div {
-  display: grid;
-  grid-template-columns: 6.7rem 1fr;
-  gap: 1rem;
+.identity-list li {
   padding-block: 0.9rem;
   border-bottom: 1px solid var(--line-dark);
-}
-
-.identity-list dt {
-  color: #969f96;
-  font-size: 0.58rem;
-}
-
-.identity-list dd {
   color: #cbd1cb;
-  font-size: 0.75rem;
-}
-
-.hero-foot {
-  position: absolute;
-  inset: auto 0 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  width: min(100%, var(--shell));
-  border-top: 1px solid var(--line-dark);
-}
-
-.hero-foot span {
-  padding-block: 1.2rem;
-  color: #737c73;
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.hero-foot span:nth-child(2) {
-  text-align: center;
-}
-
-.hero-foot span:last-child {
-  text-align: right;
+  font-size: 0.78rem;
 }
 
 .section-heading {
   display: grid;
-  grid-template-columns: minmax(11rem, 0.55fr) minmax(0, 1.4fr) minmax(17rem, 0.65fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(17rem, 0.5fr);
   gap: clamp(2rem, 4vw, 5rem);
   align-items: end;
   padding-bottom: clamp(3.5rem, 7vw, 6.5rem);
   border-bottom: 1px solid var(--line);
-}
-
-.section-index {
-  align-self: start;
-  color: var(--green-dark);
 }
 
 .section-heading h2,
@@ -529,12 +467,7 @@ ol {
 .project-copy {
   display: flex;
   flex-direction: column;
-}
-
-.project-number {
-  margin-bottom: auto;
-  padding-bottom: 3rem;
-  color: var(--green-dark);
+  justify-content: flex-end;
 }
 
 .project-kicker {
@@ -586,13 +519,15 @@ ol {
   margin-top: clamp(5rem, 9vw, 8rem);
 }
 
-.secondary-work > .section-index {
+.secondary-work-title {
   margin-bottom: 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .secondary-work article {
   display: grid;
-  grid-template-columns: 3rem minmax(13rem, 0.7fr) minmax(17rem, 1fr) minmax(16rem, 0.75fr);
+  grid-template-columns: minmax(13rem, 0.7fr) minmax(17rem, 1fr) minmax(16rem, 0.75fr);
   gap: 1.5rem;
   align-items: center;
   padding-block: 1.6rem;
@@ -603,7 +538,6 @@ ol {
   border-bottom: 1px solid var(--line);
 }
 
-.secondary-work article > span,
 .secondary-work small {
   color: var(--muted);
   font-family: var(--mono);
@@ -630,7 +564,7 @@ ol {
 
 .service-list li {
   display: grid;
-  grid-template-columns: minmax(11rem, 0.55fr) minmax(16rem, 0.75fr) minmax(18rem, 1fr);
+  grid-template-columns: minmax(16rem, 0.75fr) minmax(18rem, 1fr);
   gap: clamp(2rem, 4vw, 5rem);
   align-items: start;
   padding-block: 2.25rem;
@@ -639,12 +573,6 @@ ol {
 
 .service-list li:last-child {
   border-bottom: 1px solid var(--line);
-}
-
-.service-list span {
-  color: var(--green-dark);
-  font-family: var(--mono);
-  font-size: 0.65rem;
 }
 
 .service-list h3 {
@@ -666,10 +594,9 @@ ol {
 
 .profile-intro h2 {
   max-width: 8ch;
-  margin-top: 2.5rem;
 }
 
-.profile-intro > p:not(.section-index) {
+.profile-intro > p {
   max-width: 37rem;
   color: var(--muted);
 }
@@ -684,8 +611,10 @@ ol {
   margin-top: 1.25rem;
 }
 
-.career > .section-index {
+.career-title {
   margin-bottom: 2.5rem;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .career-item {
@@ -751,6 +680,11 @@ ol {
   border-top: 1px solid var(--line);
 }
 
+.technology-index h3 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
 .technology-index ul {
   display: flex;
   flex-wrap: wrap;
@@ -776,12 +710,7 @@ ol {
   scroll-margin-top: 4.5rem;
 }
 
-.contact .section-index {
-  color: var(--green);
-}
-
 .contact-heading h2 {
-  margin-top: 2.5rem;
   color: var(--white);
   font-size: clamp(3.2rem, 7.4vw, 7.5rem);
   font-weight: 600;
@@ -1111,11 +1040,10 @@ ol {
   }
 
   .section-heading {
-    grid-template-columns: 10rem minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.4fr) minmax(17rem, 0.6fr);
   }
 
   .section-heading > p:last-child {
-    grid-column: 2;
     max-width: 36rem;
   }
 
@@ -1134,15 +1062,15 @@ ol {
   }
 
   .secondary-work article {
-    grid-template-columns: 2rem minmax(13rem, 0.75fr) minmax(16rem, 1fr);
+    grid-template-columns: minmax(13rem, 0.75fr) minmax(16rem, 1fr);
   }
 
   .secondary-work small {
-    grid-column: 2 / -1;
+    grid-column: 1 / -1;
   }
 
   .service-list li {
-    grid-template-columns: 8rem minmax(13rem, 0.7fr) minmax(17rem, 1fr);
+    grid-template-columns: minmax(13rem, 0.7fr) minmax(17rem, 1fr);
     gap: 2rem;
   }
 }
@@ -1242,7 +1170,7 @@ ol {
   }
 
   .section-heading > p:last-child {
-    grid-column: 1;
+    grid-column: auto;
   }
 
   .project,
@@ -1260,28 +1188,23 @@ ol {
     aspect-ratio: 4 / 3;
   }
 
-  .project-number {
-    margin-bottom: 2rem;
-    padding-bottom: 0;
-  }
-
   .secondary-work article {
-    grid-template-columns: 2rem 1fr;
+    grid-template-columns: 1fr;
     gap: 0.6rem 1rem;
   }
 
   .secondary-work article > p,
   .secondary-work small {
-    grid-column: 2;
+    grid-column: 1;
   }
 
   .service-list li {
-    grid-template-columns: 3rem 1fr;
+    grid-template-columns: 1fr;
     gap: 1rem;
   }
 
   .service-list p {
-    grid-column: 2;
+    grid-column: 1;
   }
 
   .profile-grid,
@@ -1332,17 +1255,6 @@ ol {
     padding-bottom: 6.5rem;
   }
 
-  .hero-eyebrow {
-    align-items: flex-start;
-    font-size: 0.6rem;
-    line-height: 1.6;
-  }
-
-  .status-dot {
-    margin-top: 0.28rem;
-    flex: 0 0 auto;
-  }
-
   .hero h1 {
     max-width: 11ch;
     font-size: clamp(2.75rem, 14vw, 4.2rem);
@@ -1361,15 +1273,6 @@ ol {
 
   .identity-panel {
     padding-left: 1.2rem;
-  }
-
-  .identity-list > div {
-    grid-template-columns: 5.7rem 1fr;
-  }
-
-  .hero-foot span {
-    font-size: 0.48rem;
-    letter-spacing: 0.08em;
   }
 
   .section-heading h2,
@@ -1402,7 +1305,7 @@ ol {
   }
 
   .service-list li {
-    grid-template-columns: 2rem 1fr;
+    grid-template-columns: 1fr;
   }
 
   .profile-intro .profile-lead {
