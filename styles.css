@@ -10,8 +10,8 @@
   --muted-dark: #9aa39a;
   --line: #c9cbc2;
   --line-dark: rgba(238, 243, 239, 0.2);
-  --shell: 1280px;
-  --gutter: clamp(1.25rem, 4vw, 4.5rem);
+  --shell: 100%;
+  --gutter: clamp(1.15rem, 3vw, 3rem);
   --section-space: clamp(5.5rem, 8vw, 8.5rem);
   --sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
@@ -566,8 +566,7 @@ html:not(.has-scene) .hero-hint {
   color: var(--muted);
 }
 
-.project h3,
-.progi-head h3 {
+.project h3 {
   margin-top: 0.7rem;
   font-family: var(--display);
   font-stretch: 72%;
@@ -611,111 +610,135 @@ html:not(.has-scene) .hero-hint {
   margin-top: 1.5rem;
 }
 
-/* Progi-Média : 7e projet, même langage visuel que les autres */
-.progi {
-  padding-block: clamp(5rem, 9vw, 8rem) 0;
+/* Progi-Média : schéma des flux à la place d'une capture */
+.project--diagram {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
 }
 
-.progi-head {
+.project-media--diagram {
+  min-height: 0;
+  aspect-ratio: 16 / 11;
+  align-self: center;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(1.5rem, 6vw, 7rem);
-  align-items: end;
+  place-items: center;
+  padding: clamp(1rem, 2.5vw, 2rem);
+  background: var(--ink);
+  cursor: default;
 }
 
-.progi-lead {
-  max-width: 36rem;
-  color: #484d48;
-  font-size: 0.96rem;
+.progi-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.progi-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 2.5rem;
-  margin-top: 2rem;
-  padding-block: 1.1rem;
-  border-block: 1px solid var(--line);
-}
-
-.progi-stats div {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-}
-
-.progi-stats dt {
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.progi-stats dd {
-  color: var(--ink);
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.progi-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  margin-top: 2.5rem;
-  background: var(--line);
-  border: 1px solid var(--line);
-}
-
-.progi-grid li {
-  display: flex;
-  flex-direction: column;
-  padding: clamp(1.4rem, 2.2vw, 2rem);
+.project-media--diagram.has-scene {
+  padding: 0;
+  overflow: visible;
   background: var(--paper);
 }
 
-.progi-n {
-  color: var(--green-dark);
-  font-family: var(--mono);
-  font-size: 0.7rem;
+.project-media--diagram.has-scene .diagram {
+  display: none !important;
 }
 
-.progi-grid h3 {
-  margin-top: 1rem;
+.project-media--diagram::after {
+  display: none;
+}
+
+.diagram {
+  width: 100%;
+  height: auto;
+  font-family: var(--sans);
+}
+
+.diagram--tall {
+  display: none;
+}
+
+.diagram text {
+  fill: #e6eae6;
+  font-size: 23px;
+  font-weight: 500;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.diagram .col {
+  fill: var(--green);
+  font-family: var(--mono);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+}
+
+.diagram .foot {
+  fill: #7f887f;
+  font-family: var(--mono);
+  font-size: 14px;
+  text-anchor: start;
+}
+
+.diagram .node rect {
+  fill: #222722;
+  stroke: #3a413b;
+  stroke-width: 1.5;
+}
+
+.diagram .hub rect {
+  fill: #2a3a1f;
+  stroke: var(--green);
+  stroke-width: 2;
+}
+
+.diagram .hub text {
+  fill: var(--white);
   font-family: var(--display);
   font-stretch: 72%;
-  font-size: clamp(1.3rem, 1.7vw, 1.55rem);
+  font-size: 25px;
   font-weight: 800;
-  line-height: 1.05;
   text-transform: uppercase;
 }
 
-.progi-grid p {
-  flex: 1;
-  margin-top: 0.75rem;
-  color: #4d524d;
-  font-size: 0.9rem;
-  line-height: 1.6;
-}
-
-.progi-grid small {
-  margin-top: 1.25rem;
-  color: var(--muted);
+.diagram .hub .sub {
+  fill: #b7d99a;
   font-family: var(--mono);
-  font-size: 0.64rem;
-  line-height: 1.6;
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: none;
 }
 
-.progi-before {
+.diagram path {
+  fill: none;
+}
+
+.diagram .links path {
+  stroke: #3a413b;
+  stroke-width: 2;
+}
+
+.diagram .flow path {
+  stroke: var(--green);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 2 26;
+  animation: flow 1.6s linear infinite;
+}
+
+@keyframes flow {
+  to { stroke-dashoffset: -28; }
+}
+
+.work-before {
   display: flex;
   gap: 1.5rem;
   max-width: 52rem;
-  margin-top: 2.5rem;
+  margin-top: clamp(3rem, 6vw, 5rem);
   color: var(--muted);
   font-size: 0.88rem;
 }
 
-.progi-before span {
+.work-before span {
   flex: none;
   color: var(--green-dark);
   font-family: var(--mono);
@@ -1170,9 +1193,6 @@ html:not(.has-scene) .hero-hint {
 }
 
 @media (max-width: 1080px) {
-  .progi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 
   .section-heading {
     grid-template-columns: minmax(0, 1.4fr) minmax(17rem, 0.6fr);
@@ -1190,6 +1210,10 @@ html:not(.has-scene) .hero-hint {
 
   .project--left {
     grid-template-columns: minmax(16rem, 0.75fr) minmax(0, 1.25fr);
+  }
+
+  .project--diagram {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
   .project-media {
@@ -1278,15 +1302,32 @@ html:not(.has-scene) .hero-hint {
     aspect-ratio: 4 / 3;
   }
 
-  .progi-head,
   .contact-layout,
   .contact-head {
     grid-template-columns: 1fr;
   }
 
-  .progi-grid {
+  .project-media--diagram {
+    aspect-ratio: 4 / 5;
+  }
+
+  .diagram--wide {
+    display: none;
+  }
+
+  .diagram--tall {
+    display: block;
+    max-width: 26rem;
+  }
+
+  .diagram text {
+    font-size: 22px;
+  }
+
+  .project--diagram {
     grid-template-columns: 1fr;
   }
+
 
   .service-grid {
     grid-template-columns: 1fr;
@@ -1385,7 +1426,7 @@ html:not(.has-scene) .hero-hint {
   }
 
 
-  .progi-before {
+  .work-before {
     flex-direction: column;
     gap: 0.4rem;
   }
@@ -1458,6 +1499,10 @@ mini…) : tout le hero tient dans l'écran */
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .diagram .flow path {
+    animation: none;
+  }
+
   html {
     scroll-behavior: auto;
   }

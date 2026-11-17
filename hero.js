@@ -12,6 +12,7 @@ const inner = document.querySelector(".hero-inner");
 
 const projects = [...document.querySelectorAll("[data-project]")].map((el) => ({
   id: el.id,
+  n: el.querySelector(".project-kicker")?.textContent.trim().slice(0, 2),
   name: el.dataset.project,
   kind: el.dataset.kind,
   image: el.querySelector(".project-media img")?.getAttribute("src"),
@@ -169,7 +170,7 @@ function init() {
     active = i;
     const p = projects[i];
     if (label) {
-      label.querySelector("[data-n]").textContent = String(i + 1).padStart(2, "0");
+      label.querySelector("[data-n]").textContent = p.n || String(i + 1).padStart(2, "0");
       label.querySelector("[data-name]").textContent = p.name;
       label.querySelector("[data-kind]").textContent = p.kind;
       label.setAttribute("href", `#${p.id}`);

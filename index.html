@@ -97,7 +97,7 @@
     />
     <link rel="stylesheet" href="styles.css" />
     <script type="importmap">
-      { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js" } }
+      { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
     </script>
   </head>
   <body class="portfolio-page">
@@ -185,13 +185,37 @@
               </div>
             </article>
 
-            <article class="project project--left" id="projet-vendevoo" data-project="Vendevoo" data-kind="SaaS immobilier" data-reveal>
+            <article class="project project--left project--diagram" id="progi-media" data-reveal>
+              <div class="project-media project-media--diagram" data-progi-scene>
+                <svg class="diagram diagram--wide" viewBox="0 0 1000 625" role="img" aria-label="Schéma : les ERP SAP Business One, Epicor Kinetic, QuickBooks Online et PostgreSQL reliés par les connecteurs aux boutiques B2B, à l’EDI SPS Commerce, à la commande terrain et à PivoHub"><text class="col" x="160" y="84">ERP &amp; données</text><text class="col" x="500" y="84">Connecteurs</text><text class="col" x="840" y="84">Usages</text><g class="links"><path d="M280 150.0 C340 150.0 330 312 380 312"/><path d="M620 312 C670 312 660 150.0 720 150.0"/><path d="M280 250.0 C340 250.0 330 312 380 312"/><path d="M620 312 C670 312 660 250.0 720 250.0"/><path d="M280 350.0 C340 350.0 330 312 380 312"/><path d="M620 312 C670 312 660 350.0 720 350.0"/><path d="M280 450.0 C340 450.0 330 312 380 312"/><path d="M620 312 C670 312 660 450.0 720 450.0"/></g><g class="flow"><path d="M280 150.0 C340 150.0 330 312 380 312"/><path d="M620 312 C670 312 660 150.0 720 150.0"/><path d="M280 250.0 C340 250.0 330 312 380 312"/><path d="M620 312 C670 312 660 250.0 720 250.0"/><path d="M280 350.0 C340 350.0 330 312 380 312"/><path d="M620 312 C670 312 660 350.0 720 350.0"/><path d="M280 450.0 C340 450.0 330 312 380 312"/><path d="M620 312 C670 312 660 450.0 720 450.0"/></g><g class="node"><rect x="40" y="118" width="240" height="64" rx="10"/><text x="160.0" y="150.0">SAP Business One</text></g><g class="node"><rect x="720" y="118" width="240" height="64" rx="10"/><text x="840.0" y="150.0">Boutiques B2B</text></g><g class="node"><rect x="40" y="218" width="240" height="64" rx="10"/><text x="160.0" y="250.0">Epicor Kinetic</text></g><g class="node"><rect x="720" y="218" width="240" height="64" rx="10"/><text x="840.0" y="250.0">Réseau EDI</text></g><g class="node"><rect x="40" y="318" width="240" height="64" rx="10"/><text x="160.0" y="350.0">QuickBooks Online</text></g><g class="node"><rect x="720" y="318" width="240" height="64" rx="10"/><text x="840.0" y="350.0">Commande terrain</text></g><g class="node"><rect x="40" y="418" width="240" height="64" rx="10"/><text x="160.0" y="450.0">PostgreSQL</text></g><g class="node"><rect x="720" y="418" width="240" height="64" rx="10"/><text x="840.0" y="450.0">PivoHub</text></g><g class="hub"><rect x="380" y="232" width="240" height="160" rx="14"/><text x="500" y="298">Synchronisation</text><text class="sub" x="500" y="334">Node.js · C# · Java</text></g><text class="foot" x="40" y="560">Stocks · prix · commandes · factures · avis d’expédition</text></svg>
+                <svg class="diagram diagram--tall" viewBox="0 0 600 720" role="img" aria-label="Schéma des flux entre ERP, connecteurs et usages"><text class="col" x="300" y="62">ERP &amp; données</text><text class="col" x="300" y="500">Usages</text><g class="links"><path d="M157.5 122.0 L300 380"/><path d="M442.5 122.0 L300 380"/><path d="M157.5 204.0 L300 380"/><path d="M442.5 204.0 L300 380"/><path d="M157.5 552.0 L300 380"/><path d="M442.5 552.0 L300 380"/><path d="M157.5 634.0 L300 380"/><path d="M442.5 634.0 L300 380"/></g><g class="flow"><path d="M157.5 122.0 L300 380"/><path d="M442.5 122.0 L300 380"/><path d="M157.5 204.0 L300 380"/><path d="M442.5 204.0 L300 380"/><path d="M157.5 552.0 L300 380"/><path d="M442.5 552.0 L300 380"/><path d="M157.5 634.0 L300 380"/><path d="M442.5 634.0 L300 380"/></g><g class="node"><rect x="30" y="90" width="255" height="64" rx="10"/><text x="157.5" y="122.0">SAP Business One</text></g><g class="node"><rect x="315" y="90" width="255" height="64" rx="10"/><text x="442.5" y="122.0">Epicor Kinetic</text></g><g class="node"><rect x="30" y="172" width="255" height="64" rx="10"/><text x="157.5" y="204.0">QuickBooks Online</text></g><g class="node"><rect x="315" y="172" width="255" height="64" rx="10"/><text x="442.5" y="204.0">PostgreSQL</text></g><g class="node"><rect x="30" y="520" width="255" height="64" rx="10"/><text x="157.5" y="552.0">Boutiques B2B</text></g><g class="node"><rect x="315" y="520" width="255" height="64" rx="10"/><text x="442.5" y="552.0">Réseau EDI</text></g><g class="node"><rect x="30" y="602" width="255" height="64" rx="10"/><text x="157.5" y="634.0">Commande terrain</text></g><g class="node"><rect x="315" y="602" width="255" height="64" rx="10"/><text x="442.5" y="634.0">PivoHub</text></g><g class="hub"><rect x="150" y="318" width="300" height="124" rx="14"/><text x="300" y="368">Synchronisation</text><text class="sub" x="300" y="402">Node.js · C# · Java</text></g></svg>
+              </div>
+              <div class="project-copy">
+                <div>
+                  <p class="project-kicker">02 · Client · Logiciels B2B</p>
+                  <h3>Progi-Média</h3>
+                  <p class="project-description">
+                    Un éditeur de logiciels B2B qui relie les ERP des distributeurs à leurs boutiques,
+                    leurs partenaires et leurs équipes terrain. J’y travaille en mission depuis 2023&nbsp;:
+                    la plateforme e-commerce Boutik, l’EDI, PivoHub Connect, les connecteurs SAP
+                    et QuickBooks, une app de réassort par scan et la prise de commande terrain.
+                  </p>
+                </div>
+                <div class="project-meta">
+                  <p><span>Rôle</span> Backend, front, connecteurs, déploiement</p>
+                  <p><span>Stack</span> TypeScript, NestJS, Next.js, Java, C#, PHP</p>
+                  <p><span>Volume</span> ~1&nbsp;800 commits sur 30+ dépôts</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="project project--right" id="projet-vendevoo" data-project="Vendevoo" data-kind="SaaS immobilier" data-reveal>
               <a class="project-media" href="https://vendevoo.com" target="_blank" rel="noopener noreferrer" aria-label="Voir le site Vendevoo">
                 <img src="assets/projets/vendevoo.webp" width="1200" height="750" loading="lazy" decoding="async" alt="Interface de la plateforme immobilière Vendevoo" />
               </a>
               <div class="project-copy">
                 <div>
-                  <p class="project-kicker">02 · Client · SaaS immobilier</p>
+                  <p class="project-kicker">03 · Client · SaaS immobilier</p>
                   <h3>Vendevoo</h3>
                   <p class="project-description">
                     Une plateforme pour vendre son bien&nbsp;: estimation à partir des données du marché,
@@ -206,13 +230,13 @@
               </div>
             </article>
 
-            <article class="project project--right" id="projet-yael-fabrik" data-project="Yaël Fabrik" data-kind="Boutique en ligne" data-reveal>
+            <article class="project project--left" id="projet-yael-fabrik" data-project="Yaël Fabrik" data-kind="Boutique en ligne" data-reveal>
               <a class="project-media" href="https://yaelfabrik.fr" target="_blank" rel="noopener noreferrer" aria-label="Voir le site Yaël Fabrik">
                 <img src="assets/projets/yael-fabrik.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Page d’accueil de la boutique Yaël Fabrik : des créations à votre image" />
               </a>
               <div class="project-copy">
                 <div>
-                  <p class="project-kicker">03 · Client · E-commerce</p>
+                  <p class="project-kicker">04 · Client · E-commerce</p>
                   <h3>Yaël Fabrik</h3>
                   <p class="project-description">
                     La boutique d’une créatrice de bijoux, textiles et cadeaux personnalisés.
@@ -228,13 +252,13 @@
               </div>
             </article>
 
-            <article class="project project--left" id="projet-animarket" data-project="Animarket" data-kind="Animalerie à Vendôme" data-reveal>
+            <article class="project project--right" id="projet-animarket" data-project="Animarket" data-kind="Animalerie à Vendôme" data-reveal>
               <a class="project-media" href="https://animarket.fr" target="_blank" rel="noopener noreferrer" aria-label="Voir le site Animarket">
                 <img src="assets/projets/animarket.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Page d’accueil d’Animarket : animalerie et toilettage à Vendôme" />
               </a>
               <div class="project-copy">
                 <div>
-                  <p class="project-kicker">04 · Client · Commerce local</p>
+                  <p class="project-kicker">05 · Client · Commerce local</p>
                   <h3>Animarket</h3>
                   <p class="project-description">
                     Le site d’une animalerie vendômoise ouverte depuis 1993&nbsp;: la boutique,
@@ -249,13 +273,13 @@
               </div>
             </article>
 
-            <article class="project project--right" id="projet-la-cabane-a-mousse" data-project="La Cabane à Mousse" data-kind="Bar à Vendôme" data-reveal>
+            <article class="project project--left" id="projet-la-cabane-a-mousse" data-project="La Cabane à Mousse" data-kind="Bar à Vendôme" data-reveal>
               <a class="project-media" href="https://lacabaneamousse-vendome.com/" target="_blank" rel="noopener noreferrer" aria-label="Voir le site La Cabane à Mousse">
                 <img src="assets/projets/la-cabane-a-mousse.webp" width="1200" height="750" loading="lazy" decoding="async" alt="Page d’accueil du site La Cabane à Mousse" />
               </a>
               <div class="project-copy">
                 <div>
-                  <p class="project-kicker">05 · Client · Bar &amp; restaurant</p>
+                  <p class="project-kicker">06 · Client · Bar &amp; restaurant</p>
                   <h3>La Cabane à Mousse</h3>
                   <p class="project-description">
                     Le site du bar&nbsp;: les soirées à venir, la carte, les avis
@@ -270,13 +294,13 @@
               </div>
             </article>
 
-            <article class="project project--left" id="projet-deckburn" data-project="DeckBurn" data-kind="App iPhone" data-reveal>
+            <article class="project project--right" id="projet-deckburn" data-project="DeckBurn" data-kind="App iPhone" data-reveal>
               <a class="project-media project-media--deckburn" href="https://deckburn.esref-aksu.com/" target="_blank" rel="noopener noreferrer" aria-label="Voir le site DeckBurn">
                 <img src="assets/projets/deckburn.jpg" width="1720" height="880" loading="lazy" decoding="async" alt="Page d’accueil de DeckBurn avec le slogan 52 cartes, zéro excuse et l’application sur iPhone" />
               </a>
               <div class="project-copy">
                 <div>
-                  <p class="project-kicker">06 · Mon produit · App iPhone</p>
+                  <p class="project-kicker">07 · Mon produit · App iPhone</p>
                   <h3>DeckBurn</h3>
                   <p class="project-description">
                     Un jeu de 52 cartes devient une séance de sport&nbsp;: chaque carte donne
@@ -293,94 +317,11 @@
             </article>
           </div>
 
-          <article class="progi" id="progi-media" aria-labelledby="progi-title">
-          <header class="progi-head" data-reveal>
-            <div>
-              <p class="project-kicker">07 · Client · Logiciels B2B · depuis 2023</p>
-              <h3 id="progi-title">Progi-Média</h3>
-            </div>
-            <p class="progi-lead">
-              Progi-Média édite des logiciels B2B qui relient les ERP des distributeurs
-              à leurs boutiques en ligne, leurs partenaires et leurs équipes terrain.
-              J’y travaille en mission sur presque toute la chaîne&nbsp;: backend, front,
-              connecteurs et déploiement.
-            </p>
-          </header>
-
-          <dl class="progi-stats" data-reveal>
-            <div><dt>Commits</dt><dd>~1&nbsp;800</dd></div>
-            <div><dt>Dépôts</dt><dd>30+</dd></div>
-            <div><dt>Langages</dt><dd>TS · Java · C# · PHP</dd></div>
-          </dl>
-
-          <ul class="progi-grid">
-            <li data-reveal>
-              <span class="progi-n">01</span>
-              <h3>Boutik, l’e-commerce B2B</h3>
-              <p>
-                Le backend commun des boutiques B2B&nbsp;: prix propres à chaque client calculés
-                en temps réel, devis, commandes, commissions. Plusieurs boutiques Next.js
-                en production reposent dessus.
-              </p>
-              <small>NestJS · Next.js · PostgreSQL · WebSocket</small>
-            </li>
-            <li data-reveal>
-              <span class="progi-n">02</span>
-              <h3>EDI pour la distribution</h3>
-              <p>
-                Commandes, avis d’expédition et factures échangés automatiquement entre
-                l’ERP Epicor Kinetic et le réseau EDI SPS Commerce, pour plusieurs grands
-                distributeurs de matériel de laboratoire.
-              </p>
-              <small>Node.js · TypeScript · Epicor · SPS Commerce · Docker</small>
-            </li>
-            <li data-reveal>
-              <span class="progi-n">03</span>
-              <h3>PivoHub Connect</h3>
-              <p>
-                L’outil qui branche les producteurs de boissons inscrits sur PivoHub
-                à leur ERP&nbsp;: agents de synchronisation, écrans de correspondance,
-                ticket Jira créé tout seul en cas d’erreur.
-              </p>
-              <small>React · Node.js · AWS · SAP Business One</small>
-            </li>
-            <li data-reveal>
-              <span class="progi-n">04</span>
-              <h3>Connecteurs ERP</h3>
-              <p>
-                Stocks, prix, commandes et factures qui circulent entre SAP Business One,
-                QuickBooks Online et les boutiques. Connecteur Windows en C#, librairie
-                QuickBooks, passerelle Java entre PostgreSQL et une API REST.
-              </p>
-              <small>C#/.NET · Java · TypeScript · SAP B1 · QuickBooks</small>
-            </li>
-            <li data-reveal>
-              <span class="progi-n">05</span>
-              <h3>Réassort par scan</h3>
-              <p>
-                Une app web pour gérer le stock chez le client&nbsp;: on scanne les articles
-                en rayon, la commande de réapprovisionnement se prépare toute seule.
-              </p>
-              <small>Next.js · Recherche Orama · Code-barres</small>
-            </li>
-            <li data-reveal>
-              <span class="progi-n">06</span>
-              <h3>Commande terrain &amp; outils</h3>
-              <p>
-                Prise de commande pour les représentants (catalogues, paniers, tournées),
-                un plugin Strapi maison, un configurateur produit en React et la configuration
-                des déploiements.
-              </p>
-              <small>PHP · React · Strapi · Kubernetes</small>
-            </li>
-          </ul>
-
-          <p class="progi-before" data-reveal>
+          <p class="work-before" data-reveal>
             <span>Avant</span>
             Ingénieur Polytech. En 2022 chez Ithaque Informatique&nbsp;: smart contracts Solidity,
             dApps (dont une loterie Ethereum payée en USDT) et backends Node.js.
           </p>
-          </article>
         </div>
       </section>
 
@@ -486,5 +427,6 @@
     </footer>
     <script src="script.js"></script>
     <script type="module" src="hero.js"></script>
+    <script type="module" src="progi3d.js"></script>
   </body>
 </html>
