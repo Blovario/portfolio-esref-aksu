@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Esref Aksu — Développeur freelance à Vendôme</title>
+    <title>Esref Aksu — Développeur freelance à Vendôme et Paris</title>
     <meta
       name="description"
-      content="Esref Aksu, ingénieur et développeur freelance à Vendôme. Sites web, boutiques en ligne, SaaS et outils métier : Mon Carnet Client, Vendevoo, Yaël Fabrik, Animarket…"
+      content="Esref Aksu, ingénieur et développeur freelance à Vendôme et Paris. Sites web, boutiques en ligne, SaaS et outils métier : Mon Carnet Client, Vendevoo, Yaël Fabrik, Animarket…"
     />
-    <meta property="og:title" content="Esref Aksu — Développeur freelance à Vendôme" />
+    <meta property="og:title" content="Esref Aksu — Développeur freelance à Vendôme et Paris" />
     <meta
       property="og:description"
       content="Sites web, boutiques en ligne, SaaS et outils métier."
@@ -23,7 +23,7 @@
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:alt" content="Esref Aksu — Ingénieur et développeur freelance" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Esref Aksu — Développeur freelance à Vendôme" />
+    <meta name="twitter:title" content="Esref Aksu — Développeur freelance à Vendôme et Paris" />
     <meta name="twitter:description" content="Sites web, boutiques en ligne, SaaS et outils métier." />
     <meta name="twitter:image" content="https://esref-aksu.com/assets/og-image.jpg" />
     <link rel="canonical" href="https://esref-aksu.com/" />
@@ -54,6 +54,7 @@
             },
             "areaServed": [
               { "@type": "City", "name": "Vendôme" },
+              { "@type": "City", "name": "Paris" },
               { "@type": "Country", "name": "France" }
             ],
             "identifier": [
@@ -119,8 +120,8 @@
         </button>
         <ul class="nav-list" id="primary-navigation">
           <li><a class="nav-link" href="#projets">Projets</a></li>
+          <li><a class="nav-link" href="#progi-media">Progi-Média</a></li>
           <li><a class="nav-link" href="#expertise">Ce que je fais</a></li>
-          <li><a class="nav-link" href="#parcours">Parcours</a></li>
           <li><a class="nav-link nav-contact" href="#contact">Me contacter <span>↗</span></a></li>
         </ul>
       </nav>
@@ -137,7 +138,7 @@
         </div>
 
         <div class="shell hero-inner">
-          <p class="hero-tag">Développeur freelance · Vendôme</p>
+          <p class="hero-tag">Développeur freelance · Vendôme &amp; Paris</p>
           <h1 id="hero-title">Esref<br />Aksu</h1>
           <p class="hero-line">Je développe des sites, des boutiques et des logiciels.</p>
         </div>
@@ -293,19 +294,97 @@
             </article>
           </div>
 
-          <div class="secondary-work" data-reveal>
-            <h3 class="secondary-work-title">Aussi</h3>
-            <article>
-              <h3>Plateforme B2B Progi-Média</h3>
-              <p>E-commerce, devis, intégrations API et automatisation des commandes.</p>
-              <small>Node.js · TypeScript · Vue.js · WooCommerce · Strapi</small>
-            </article>
-            <article>
-              <h3>dApp Loterie Ethereum</h3>
-              <p>Tirages automatisés et paiements USDT via smart contracts.</p>
-              <small>Solidity · Node.js · Ethereum</small>
-            </article>
-          </div>
+        </div>
+      </section>
+
+      <section class="progi dark-section section" id="progi-media" aria-labelledby="progi-title">
+        <div class="shell">
+          <header class="progi-head" data-reveal>
+            <div>
+              <p class="progi-kicker">Client · depuis 2023</p>
+              <h2 id="progi-title">Progi-Média</h2>
+            </div>
+            <p class="progi-lead">
+              Progi-Média édite des logiciels B2B qui relient les ERP des distributeurs
+              à leurs boutiques en ligne, leurs partenaires et leurs équipes terrain.
+              J’y travaille en mission sur presque toute la chaîne&nbsp;: backend, front,
+              connecteurs et déploiement.
+            </p>
+          </header>
+
+          <dl class="progi-stats" data-reveal>
+            <div><dt>Commits</dt><dd>~1&nbsp;800</dd></div>
+            <div><dt>Dépôts</dt><dd>30+</dd></div>
+            <div><dt>Langages</dt><dd>TS · Java · C# · PHP</dd></div>
+          </dl>
+
+          <ul class="progi-grid">
+            <li data-reveal>
+              <span class="progi-n">01</span>
+              <h3>Boutik, l’e-commerce B2B</h3>
+              <p>
+                Le backend commun des boutiques B2B&nbsp;: prix propres à chaque client calculés
+                en temps réel, devis, commandes, commissions. Plusieurs boutiques Next.js
+                en production reposent dessus.
+              </p>
+              <small>NestJS · Next.js · PostgreSQL · WebSocket</small>
+            </li>
+            <li data-reveal>
+              <span class="progi-n">02</span>
+              <h3>EDI pour la distribution</h3>
+              <p>
+                Commandes, avis d’expédition et factures échangés automatiquement entre
+                l’ERP Epicor Kinetic et le réseau EDI SPS Commerce, pour plusieurs grands
+                distributeurs de matériel de laboratoire.
+              </p>
+              <small>Node.js · TypeScript · Epicor · SPS Commerce · Docker</small>
+            </li>
+            <li data-reveal>
+              <span class="progi-n">03</span>
+              <h3>PivoHub Connect</h3>
+              <p>
+                L’outil qui branche les producteurs de boissons inscrits sur PivoHub
+                à leur ERP&nbsp;: agents de synchronisation, écrans de correspondance,
+                ticket Jira créé tout seul en cas d’erreur.
+              </p>
+              <small>React · Node.js · AWS · SAP Business One</small>
+            </li>
+            <li data-reveal>
+              <span class="progi-n">04</span>
+              <h3>Connecteurs ERP</h3>
+              <p>
+                Stocks, prix, commandes et factures qui circulent entre SAP Business One,
+                QuickBooks Online et les boutiques. Connecteur Windows en C#, librairie
+                QuickBooks, passerelle Java entre PostgreSQL et une API REST.
+              </p>
+              <small>C#/.NET · Java · TypeScript · SAP B1 · QuickBooks</small>
+            </li>
+            <li data-reveal>
+              <span class="progi-n">05</span>
+              <h3>Réassort par scan</h3>
+              <p>
+                Une app web pour gérer le stock chez le client&nbsp;: on scanne les articles
+                en rayon, la commande de réapprovisionnement se prépare toute seule.
+              </p>
+              <small>Next.js · Recherche Orama · Code-barres</small>
+            </li>
+            <li data-reveal>
+              <span class="progi-n">06</span>
+              <h3>Commande terrain &amp; outils</h3>
+              <p>
+                Prise de commande pour les représentants (catalogues, paniers, tournées),
+                un plugin Strapi maison, un configurateur produit en React et la configuration
+                des déploiements.
+              </p>
+              <small>PHP · React · Strapi · Kubernetes</small>
+            </li>
+          </ul>
+
+          <p class="progi-before" data-reveal>
+            <span>Avant</span>
+            Ingénieur Polytech. En 2022 chez Ithaque Informatique&nbsp;: smart contracts Solidity,
+            dApps (dont une loterie Ethereum payée en USDT) et backends Node.js.
+          </p>
         </div>
       </section>
 
@@ -314,7 +393,7 @@
           <header class="section-heading" data-reveal>
             <h2 id="expertise-title">Ce que je fais</h2>
           </header>
-          <ul class="service-list">
+          <ul class="service-grid">
             <li data-reveal>
               <h3>Sites vitrines</h3>
               <p>Pour les commerces et les artisans qui veulent être trouvés et contactés.</p>
@@ -322,110 +401,80 @@
             </li>
             <li data-reveal>
               <h3>Boutiques en ligne</h3>
-              <p>Catalogue, paiement, livraison, et le sur-mesure quand WooCommerce ne suffit pas.</p>
-              <small>Yaël Fabrik · Progi-Média</small>
+              <p>Catalogue, paiement, livraison, et du sur-mesure quand l’outil standard ne suffit pas.</p>
+              <small>Yaël Fabrik · Boutik</small>
             </li>
             <li data-reveal>
               <h3>SaaS &amp; applications</h3>
-              <p>Du premier écran à la mise en production, web et mobile.</p>
+              <p>Du premier écran à la mise en production, sur le web et sur mobile.</p>
               <small>Mon Carnet Client · Vendevoo · DeckBurn</small>
             </li>
             <li data-reveal>
               <h3>Connecteurs &amp; automatisation</h3>
-              <p>Faire parler un ERP, une boutique et un outil interne sans ressaisie.</p>
-              <small>SAP Business One · PivoHub · CI/CD</small>
+              <p>Faire parler un ERP, une boutique et vos outils, sans ressaisie.</p>
+              <small>SAP Business One · Epicor · QuickBooks · EDI</small>
             </li>
-          </ul>
-        </div>
-      </section>
-
-      <section class="profile section" id="parcours" aria-labelledby="profile-title">
-        <div class="shell profile-grid">
-          <div class="profile-intro" data-reveal>
-            <h2 id="profile-title">Parcours</h2>
-            <p class="profile-lead">
-              Ingénieur diplômé de Polytech, développeur freelance depuis 2023.
-              Je travaille aussi bien sur un site de commerce local que sur un
-              connecteur SAP ou une app mobile.
-            </p>
-          </div>
-
-          <div class="career" data-reveal>
-            <article class="career-item">
-              <div class="career-head">
-                <div><h3>Freelance</h3><p>Sites, boutiques et produits pour mes clients et pour moi</p></div>
-                <time>2023 — Aujourd’hui</time>
-              </div>
-            </article>
-            <article class="career-item">
-              <div class="career-head">
-                <div><h3>Progi-Média</h3><p>Développeur full stack, en mission</p></div>
-                <time>2023 — Aujourd’hui</time>
-              </div>
-              <ul>
-                <li>Backend Java 11 multi-module et ses API REST.</li>
-                <li>Synchronisations PivoHub–SAP Business One&nbsp;: stocks, prix, commandes, factures.</li>
-                <li>Connecteurs Windows C#/.NET, e-commerce B2B, CI/CD et supervision Docker.</li>
-              </ul>
-            </article>
-            <article class="career-item">
-              <div class="career-head">
-                <div><h3>Ithaque Informatique</h3><p>Full stack &amp; blockchain</p></div>
-                <time>2022</time>
-              </div>
-              <ul><li>Smart contracts Solidity, dApps et backends Node.js.</li></ul>
-            </article>
-          </div>
-        </div>
-
-        <div class="shell technology-index" data-reveal>
-          <ul>
-            <li>TypeScript</li><li>Next.js</li><li>NestJS</li><li>React Native</li><li>PostgreSQL</li>
-            <li>Java</li><li>C#</li><li>WordPress</li><li>Docker</li><li>Solidity</li>
           </ul>
         </div>
       </section>
 
       <section class="contact dark-section" id="contact" aria-labelledby="contact-title">
-        <div class="shell contact-heading" data-reveal>
-          <p class="contact-clock">
-            <span class="contact-dot" aria-hidden="true"></span>
-            Vendôme, <time id="local-time">ici</time>
-          </p>
-          <h2 id="contact-title">Écrivez-moi.</h2>
-          <a class="contact-email" href="mailto:contact@esref-aksu.com">
-            <span class="contact-email-text">contact@esref-aksu.com</span>
-            <span class="contact-email-arrow" aria-hidden="true">↗</span>
-          </a>
-        </div>
-
-        <div class="shell contact-grid">
-          <div class="contact-details" data-reveal>
-            <p>
+        <div class="shell contact-layout">
+          <header class="contact-head" data-reveal>
+            <div>
+              <p class="contact-clock">
+              <span class="contact-dot" aria-hidden="true"></span>
+              Vendôme &amp; Paris, <time id="local-time">ici</time>
+              </p>
+              <h2 id="contact-title">Écrivez-moi.</h2>
+            </div>
+            <p class="contact-intro">
               Quelques lignes suffisent&nbsp;: ce que vous faites, ce que vous voulez changer.
               C’est moi qui lis et qui réponds.
             </p>
-            <dl>
-              <div><dt>Téléphone</dt><dd><a href="tel:+33767674489">07 67 67 44 89</a></dd></div>
-              <div>
-                <dt>Ailleurs</dt>
-                <dd>
-                  <a href="https://github.com/Blovario" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
-                  <a href="https://linkedin.com/in/esref-aksu" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
-                </dd>
-              </div>
-            </dl>
-          </div>
+          </header>
+
+          <ul class="contact-links" data-reveal>
+              <li>
+                <a href="mailto:contact@esref-aksu.com">
+                  <span class="contact-links-label">Email</span>
+                  <span class="contact-links-value">contact@esref-aksu.com</span>
+                  <span class="contact-links-arrow" aria-hidden="true">↗</span>
+                </a>
+              </li>
+              <li>
+                <a href="tel:+33767674489">
+                  <span class="contact-links-label">Téléphone</span>
+                  <span class="contact-links-value">07 67 67 44 89</span>
+                  <span class="contact-links-arrow" aria-hidden="true">↗</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://linkedin.com/in/esref-aksu" target="_blank" rel="noopener noreferrer">
+                  <span class="contact-links-label">LinkedIn</span>
+                  <span class="contact-links-value">in/esref-aksu</span>
+                  <span class="contact-links-arrow" aria-hidden="true">↗</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/Blovario" target="_blank" rel="noopener noreferrer">
+                  <span class="contact-links-label">GitHub</span>
+                  <span class="contact-links-value">Blovario</span>
+                  <span class="contact-links-arrow" aria-hidden="true">↗</span>
+                </a>
+              </li>
+            </ul>
 
           <form class="contact-form" id="contact-form" action="https://api.web3forms.com/submit" method="POST" data-reveal>
+            <p class="contact-form-title">Ou directement ici</p>
             <input type="hidden" name="access_key" value="078c6a29-0132-4cd5-81cf-b4819717a990" />
             <div class="form-result" id="form-result" role="status" aria-live="polite"></div>
-            <div class="field"><label for="name">Nom</label><input id="name" name="name" type="text" autocomplete="name" required /></div>
-            <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required /></div>
-            <div class="field field--wide"><label for="message">Message</label><textarea id="message" name="message" rows="4" required></textarea></div>
+            <div class="field"><label for="name">Votre nom</label><input id="name" name="name" type="text" autocomplete="name" required /></div>
+            <div class="field"><label for="email">Votre email</label><input id="email" name="email" type="email" autocomplete="email" required /></div>
+            <div class="field field--wide"><label for="message">Votre projet</label><textarea id="message" name="message" rows="5" required placeholder="Ce que vous faites, ce dont vous avez besoin, vos délais…"></textarea></div>
             <div class="form-foot field--wide">
+              <button class="submit-button" type="submit">Envoyer le message <span>↗</span></button>
               <p>Vos informations servent uniquement à vous répondre. <a href="mentions-legales.html#donnees-personnelles">Confidentialité</a></p>
-              <button class="submit-button" type="submit">Envoyer <span>↗</span></button>
             </div>
           </form>
         </div>
@@ -435,7 +484,7 @@
     <footer class="site-footer">
       <div class="shell footer-row">
         <p>© 2026 Esref Aksu</p>
-        <p>Vendôme · Loir-et-Cher</p>
+        <p>Vendôme · Paris</p>
         <a href="mentions-legales.html">Mentions légales</a>
       </div>
     </footer>
