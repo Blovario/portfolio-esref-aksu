@@ -1,4 +1,4 @@
-import { FOV, W, H, RADIUS_CORNER, RIG_TILT, FLOOR, INK, heroView, pickSrc } from "./hero-geometry.js";
+import { FOV, W, H, RADIUS_CORNER, RIG_TILT, FLOOR, layoutHero, pickSrc } from "./hero-geometry.js";
 
 /*
  * Image de remplacement de l'anneau, affichée pendant le chargement de la 3D
@@ -75,17 +75,16 @@ const dotsCanvas = document.createElement("canvas");
 dotsCanvas.className = "poster-floor";
 poster.prepend(dotsCanvas);
 
-function render() {
+let view = null;
+let project = null;
+let fogAt = null;
+
+// Recalcule la caméra et redessine le sol (au chargement et au redimensionnement)
+function layout() {
+  if (!hero.clientWidth || !hero.clientHeight) return false;
+  view = layoutHero(hero, inner, N);
   const w = hero.clientWidth;
   const h = hero.clientHeight;
-  if (!w || !h) return;
-  const view = heroView({
-    w,
-    h,
-    padTop: parseFloat(getComputedStyle(hero).paddingTop) || 0,
-    innerTop: inner?.offsetTop,
-    n: N,
-  });
 
   // repère de la caméra (lookAt)
   const eye = view.cam;
@@ -94,8 +93,8 @@ function render() {
   const yc = cross(zc, xc);
   const f = 1 / Math.tan(((FOV / 2) * Math.PI) / 180);
 
-  const project = (p) => {
-    const v = sub(p, eye);
+  project = (pt) => {
+    const v = sub(pt, eye);
     const vx = dot(v, xc), vy = dot(v, yc), vz = dot(v, zc);
     const depth = -vz;
     return {
@@ -104,30 +103,7 @@ function render() {
       depth,
     };
   };
-  const fogAt = (depth) => smoothstep(view.fog.near, view.fog.far, depth);
-
-  // --- écrans ---
-  const frontW = { v: 0 };
-  const placed = panels.map(({ el, fog }, i) => {
-    const a = i * STEP;
-    const center = [Math.sin(a) * view.R, 0, Math.cos(a) * view.R];
-    const corner = (lx, ly) => rig(rotY([lx, ly, 0], a).map((c, k) => c + center[k]), view.layout);
-    const q = [corner(-W / 2, H / 2), corner(W / 2, H / 2), corner(W / 2, -H / 2), corner(-W / 2, -H / 2)].map(project);
-    const area = (q[1].x - q[0].x) * (q[3].y - q[0].y) - (q[1].y - q[0].y) * (q[3].x - q[0].x);
-    const back = area < 0;
-    if (i === 0) frontW.v = Math.hypot(q[1].x - q[0].x, q[1].y - q[0].y);
-
-    el.style.transform = matrix3d(q.map((p) => [p.x, p.y]));
-    el.classList.toggle("is-back", back);
-    el.classList.toggle("is-front", i === 0);
-    // brouillard : plus sombre vers le fond, comme dans la scène
-    const fl = fogAt((q[0].depth + q[3].depth) / 2);
-    const fr = fogAt((q[1].depth + q[2].depth) / 2);
-    fog.style.background = `linear-gradient(90deg, rgba(23,26,24,${fl.toFixed(3)}), rgba(23,26,24,${fr.toFixed(3)}))`;
-    return { el, depth: (q[0].depth + q[1].depth + q[2].depth + q[3].depth) / 4 };
-  });
-  placed.sort((a, b) => b.depth - a.depth).forEach((p, k) => (p.el.style.zIndex = String(k + 1)));
-  poster.style.setProperty("--edge", `${(EL_W / Math.max(frontW.v, 1)).toFixed(3)}px`);
+  fogAt = (depth) => smoothstep(view.fog.near, view.fog.far, depth);
 
   // --- sol en points ---
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -139,22 +115,87 @@ function render() {
   const ink = [0x17, 0x1a, 0x18];
   for (let x = -FLOOR.extent; x <= FLOOR.extent + 1e-6; x += FLOOR.step) {
     for (let z = -FLOOR.extent; z <= FLOOR.extent + 1e-6; z += FLOOR.step) {
-      const p = project(rig([x, FLOOR.y, z], view.layout));
-      if (p.depth <= 0.1 || p.x < -4 || p.y < -4 || p.x > w + 4 || p.y > h + 4) continue;
-      const k = fogAt(p.depth);
-      const size = (FLOOR.size * (h / 2)) / p.depth; // même formule que PointsMaterial
+      const pt = project(rig([x, FLOOR.y, z], view.layout));
+      if (pt.depth <= 0.1 || pt.x < -4 || pt.y < -4 || pt.x > w + 4 || pt.y > h + 4) continue;
+      const k = fogAt(pt.depth);
+      const size = (FLOOR.size * (h / 2)) / pt.depth; // même formule que PointsMaterial
       const c = base.map((v, j) => Math.round(v + (ink[j] - v) * k));
       ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
-      ctx.fillRect(p.x - size / 2, p.y - size / 2, size, size);
+      ctx.fillRect(pt.x - size / 2, pt.y - size / 2, size, size);
     }
   }
+  return true;
+}
+
+// Place les écrans
+function place() {
+  if (!view) return;
+  let frontW = 0;
+  const placed = panels.map(({ el, fog }, i) => {
+    const a = i * STEP;
+    const center = [Math.sin(a) * view.R, 0, Math.cos(a) * view.R];
+    const corner = (lx, ly) => rig(rotY([lx, ly, 0], a).map((c, k) => c + center[k]), view.layout);
+    const q = [corner(-W / 2, H / 2), corner(W / 2, H / 2), corner(W / 2, -H / 2), corner(-W / 2, -H / 2)].map(project);
+    const area = (q[1].x - q[0].x) * (q[3].y - q[0].y) - (q[1].y - q[0].y) * (q[3].x - q[0].x);
+    if (i === 0) frontW = Math.hypot(q[1].x - q[0].x, q[1].y - q[0].y);
+
+    el.style.transform = matrix3d(q.map((pt) => [pt.x, pt.y]));
+    el.classList.toggle("is-back", area < 0);
+    el.classList.toggle("is-front", i === 0);
+    // brouillard : plus sombre vers le fond, comme dans la scène
+    const fl = fogAt((q[0].depth + q[3].depth) / 2);
+    const fr = fogAt((q[1].depth + q[2].depth) / 2);
+    fog.style.background = `linear-gradient(90deg, rgba(23,26,24,${fl.toFixed(3)}), rgba(23,26,24,${fr.toFixed(3)}))`;
+    return { el, depth: (q[0].depth + q[1].depth + q[2].depth + q[3].depth) / 4 };
+  });
+  placed.sort((a, b) => b.depth - a.depth).forEach((pp, k) => (pp.el.style.zIndex = String(k + 1)));
+  poster.style.setProperty("--edge", `${(EL_W / Math.max(frontW, 1)).toFixed(3)}px`);
+}
+
+function render() {
+  if (layout()) place();
+}
+
+// --- Chargement ---
+// Avec WebGL : un point vert pulse au centre de l'anneau, d'où la scène 3D jaillira.
+// Sans WebGL (ou si la 3D n'arrive pas) : l'anneau fixe s'affiche à la place.
+const forcePoster = new URLSearchParams(location.search).has("poster");
+function webgl() {
+  try {
+    const c = document.createElement("canvas");
+    return !!(c.getContext("webgl2") || c.getContext("webgl"));
+  } catch {
+    return false;
+  }
+}
+
+const loader = document.createElement("span");
+loader.className = "hero-loader";
+loader.setAttribute("aria-hidden", "true");
+
+function placeLoader() {
+  if (!view) return;
+  const c = project(rig([0, 0, 0], view.layout));
+  loader.style.transform = `translate(${c.x.toFixed(1)}px, ${c.y.toFixed(1)}px)`;
+}
+
+function showPoster() {
+  if (document.documentElement.classList.contains("has-ring")) return;
+  poster.classList.add("is-shown");
 }
 
 if (hero && poster && N) {
   poster.style.setProperty("--radius", `${((RADIUS_CORNER / W) * 100).toFixed(2)}% / ${((RADIUS_CORNER / H) * 100).toFixed(2)}%`);
-  poster.style.background = INK;
-  render();
-  window.addEventListener("resize", render);
-  document.fonts?.ready.then(render);
-  window.__heroPoster = { render };
+  hero.appendChild(loader);
+  const refresh = () => {
+    render();
+    placeLoader();
+  };
+  refresh();
+  window.addEventListener("resize", refresh);
+  document.fonts?.ready.then(refresh);
+
+  if (forcePoster || !webgl()) showPoster();
+  else setTimeout(showPoster, 8000); // la 3D ne s'est pas chargée : on montre l'anneau fixe
+  window.__heroPoster = { render: refresh };
 }

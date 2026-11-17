@@ -263,13 +263,28 @@ ol {
   cursor: grabbing;
 }
 
+/* Mise en page empilée (choisie par le script quand l'anneau ne tient pas à côté du texte) :
+   place minimum réservée à l'anneau au-dessus du texte */
+.hero.is-stacked::before {
+  content: "";
+  flex: 0 0 min(14rem, 24svh);
+}
+
+/* même chose avant le chargement du script, pour les écrans en portrait */
+@media (max-aspect-ratio: 19 / 20) {
+  .hero::before {
+    content: "";
+    flex: 0 0 min(14rem, 24svh);
+  }
+}
+
 /* Image de remplacement de l'anneau : identique à la scène 3D, en CSS 3D */
 .hero-poster {
   position: absolute;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  transition: opacity 260ms ease;
+  background: var(--ink);
 }
 
 .poster-floor {
@@ -317,7 +332,72 @@ ol {
 }
 
 .has-ring .hero-poster {
+  display: none;
+}
+
+/* Anneau fixe : seulement sans 3D (navigateur sans WebGL, ou 3D pas chargée) */
+.hero-poster {
   opacity: 0;
+  transition: opacity 600ms ease;
+}
+
+.hero-poster.is-shown {
+  opacity: 1;
+}
+
+/* Pendant le chargement : un point vert pulse là où l'anneau va jaillir */
+.hero-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+
+.hero-loader::before,
+.hero-loader::after {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.hero-loader::after {
+  animation: loader-pulse 1.4s ease-out infinite;
+}
+
+@keyframes loader-pulse {
+  from { transform: scale(1); opacity: 0.6; }
+  to { transform: scale(4); opacity: 0; }
+}
+
+.has-ring .hero-loader,
+.hero-poster.is-shown ~ .hero-loader {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .js .hero-tag,
+  .js .hero h1,
+  .js .hero-line,
+  .js .hero-bar {
+    animation: hero-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .js .hero h1 { animation-delay: 80ms; }
+  .js .hero-line { animation-delay: 180ms; }
+  .js .hero-bar { animation-delay: 300ms; }
+}
+
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(1.25rem); }
+  to { opacity: 1; transform: none; }
 }
 
 .hero-inner {
@@ -1396,11 +1476,6 @@ html:not(.has-scene) .hero-hint {
     min-height: 100svh;
   }
 
-  /* place minimum réservée à l'anneau 3D au-dessus du texte */
-  .hero::before {
-    content: "";
-    flex: 0 0 min(14rem, 24svh);
-  }
 
 
   .hero-bar {

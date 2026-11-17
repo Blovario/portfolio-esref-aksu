@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { FOV, W, H, RADIUS_CORNER, RIG_TILT, FLOOR, ringRadius, heroView, pickSrc } from "./hero-geometry.js";
+import { FOV, W, H, RADIUS_CORNER, RIG_TILT, FLOOR, ringRadius, layoutHero, pickSrc } from "./hero-geometry.js";
 
 /*
  * Hero 3D : les écrans des projets montés en anneau.
@@ -59,6 +59,14 @@ function roundedPanel(w, h, r) {
 function init() {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const INK = 0x171a18;
+  const INTRO = 1.3; // secondes
+  const clamp01 = (x) => Math.min(Math.max(x, 0), 1);
+  const easeOut = (x) => 1 - Math.pow(1 - clamp01(x), 3);
+  const easeBack = (x) => {
+    x = clamp01(x);
+    const c = 1.5;
+    return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2);
+  };
   const GREEN = 0x7ab540;
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -87,6 +95,8 @@ function init() {
   let texturesLeft = projects.filter((p) => p.image).length;
   let ready = false; // toutes les captures sont dans la scène
   let readyAt = -1;
+  let warming = false;
+  let introT = 0;
 
   projects.forEach((p, i) => {
     const holder = new THREE.Group();
@@ -142,10 +152,45 @@ function init() {
   }
   const floorGeo = new THREE.BufferGeometry();
   floorGeo.setAttribute("position", new THREE.Float32BufferAttribute(dots, 3));
-  const floor = new THREE.Points(
-    floorGeo,
-    new THREE.PointsMaterial({ color: FLOOR.color, size: FLOOR.size, sizeAttenuation: true })
-  );
+  // un léger hasard par point : ils s'allument un à un, pas en anneau parfait
+  floorGeo.setAttribute("aRand", new THREE.Float32BufferAttribute(dots.filter((_, k) => k % 3 === 0).map(() => Math.random()), 1));
+  // Même rendu que PointsMaterial (taille selon la distance, brouillard), plus une vague d'allumage
+  const floorMat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    uniforms: {
+      uColor: { value: new THREE.Color(FLOOR.color) },
+      uFog: { value: new THREE.Color(0x171a18) },
+      uFogNear: { value: 0 },
+      uFogFar: { value: 1 },
+      uSize: { value: FLOOR.size },
+      uScale: { value: 1 },
+      uReveal: { value: 0 }, // rayon (en unités) déjà allumé autour de l'anneau
+    },
+    vertexShader: `
+      attribute float aRand;
+      uniform float uSize, uScale, uReveal, uFogNear, uFogFar;
+      varying float vAlpha, vFog;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * mv;
+        gl_PointSize = uSize * uScale / -mv.z;
+        float d = length(position.xz) + aRand * 2.2;
+        vAlpha = clamp((uReveal - d) / 0.8, 0.0, 1.0);
+        vFog = smoothstep(uFogNear, uFogFar, -mv.z);
+      }`,
+    fragmentShader: `
+      uniform vec3 uColor, uFog;
+      varying float vAlpha, vFog;
+      void main() {
+        if (vAlpha <= 0.0) discard;
+        // petit éclat vert au moment où le point s'allume
+        vec3 c = mix(vec3(0.48, 0.71, 0.25), uColor, smoothstep(0.0, 1.0, vAlpha));
+        gl_FragColor = vec4(mix(c, uFog, vFog), vAlpha);
+        #include <colorspace_fragment>
+      }`,
+  });
+  const floor = new THREE.Points(floorGeo, floorMat);
   floor.position.y = FLOOR.y;
   rig.add(floor);
 
@@ -187,16 +232,8 @@ function init() {
   }
 
   function resize() {
-    const w = hero.clientWidth;
-    const h = hero.clientHeight;
-    renderer.setSize(w, h, false);
-    const view = heroView({
-      w,
-      h,
-      padTop: parseFloat(getComputedStyle(hero).paddingTop) || 0,
-      innerTop: inner?.offsetTop,
-      n: N,
-    });
+    const view = layoutHero(hero, inner, N);
+    renderer.setSize(hero.clientWidth, hero.clientHeight, false);
     camera.aspect = view.aspect;
     camera.position.set(...view.cam);
     camera.lookAt(...view.target);
@@ -205,6 +242,9 @@ function init() {
     // l'écran de face reste net, l'arrière de l'anneau se fond dans le fond
     scene.fog.near = view.fog.near;
     scene.fog.far = view.fog.far;
+    floorMat.uniforms.uFogNear.value = view.fog.near;
+    floorMat.uniforms.uFogFar.value = view.fog.far;
+    floorMat.uniforms.uScale.value = hero.clientHeight * 0.5 * renderer.getPixelRatio();
   }
 
   function pickPanel(e) {
@@ -299,27 +339,34 @@ function init() {
     const dt = Math.min(clock.getDelta(), 0.05);
     const t = clock.elapsedTime;
     const now = performance.now();
+    // progression de l'arrivée, image par image (un ralentissement ne lui fait pas sauter d'étape)
+    if (ready) introT += dt;
+    const k = ready ? (reduceMotion ? 1 : introT / INTRO) : 0;
 
     // On ne touche jamais à la position choisie : pendant qu'on lit la page,
     // la rotation automatique est simplement en pause.
     if (window.scrollY > 4 && !dragging) lastInteraction = now;
 
     // défilement automatique, un écran toutes les 4 s, après 5 s sans interaction
-    if (ready && !reduceMotion && !dragging && now - lastInteraction > 5000) {
+    if (k >= 1 && !reduceMotion && !dragging && now - lastInteraction > 5000) {
       target -= STEP;
       lastInteraction = now - 1000;
     }
 
     if (!dragging) angle += (target - angle) * (1 - Math.exp(-dt * 4.5));
-    ring.rotation.y = angle;
 
-    // tant que l'image de remplacement est affichée, la scène garde exactement la pose de départ
-    const live = ready ? 1 - Math.exp(-dt * 3) : 0;
+    // Arrivée : l'anneau jaillit du point vert en faisant un quart de tour, puis le sol s'allume
+    ring.scale.setScalar(Math.max(easeBack(k), 0.001));
+    ring.visible = ready || warming;
+    ring.rotation.y = angle - STEP * 1.5 * (1 - easeOut(k));
+    floorMat.uniforms.uReveal.value = reduceMotion ? 99 : easeOut((k - 0.15) / 1.6) * (FLOOR.extent * 1.5 + 3);
+
+    // la souris ne fait bouger l'anneau qu'une fois son arrivée terminée
+    const live = k >= 1 ? 1 - Math.exp(-dt * 3) : 0;
     pointer.x += (pointer.tx - pointer.x) * live;
     pointer.y += (pointer.ty - pointer.y) * live;
 
-    if (ready && readyAt < 0) readyAt = t;
-    const float = reduceMotion || !ready ? 0 : Math.sin((t - readyAt) * 0.6) * 0.06;
+    const float = reduceMotion || !ready ? 0 : Math.sin((t - readyAt) * 0.6) * 0.06 * Math.min(k, 1);
     rig.position.set(layout.x, layout.y + float, 0);
     rig.rotation.x = RIG_TILT.x + pointer.y * 0.08;
     rig.rotation.z = RIG_TILT.z + pointer.x * -0.03;
@@ -334,10 +381,15 @@ function init() {
 
     renderer.render(scene, camera);
     flight?.update();
-    // relais avec l'image de remplacement : on ne montre la 3D qu'une fois toutes les captures chargées
-    if (!ready && texturesLeft <= 0) {
+    // toutes les captures sont chargées : une image de préchauffe (envoi des textures
+    // à la carte graphique, invisible car minuscule), puis l'anneau jaillit
+    if (!ready && warming) {
       ready = true;
-      requestAnimationFrame(() => document.documentElement.classList.add("has-ring"));
+      readyAt = t;
+      lastInteraction = now;
+      document.documentElement.classList.add("has-ring");
+    } else if (!ready && texturesLeft <= 0) {
+      warming = true;
     }
     requestAnimationFrame(frame);
   }
