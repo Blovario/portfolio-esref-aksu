@@ -311,11 +311,9 @@ function init() {
     const t = clock.elapsedTime;
     const now = performance.now();
 
-    // dès qu'on scrolle, l'anneau ramène l'écran 01 devant lui pour le passage de relais
-    if (flight && window.scrollY > 4 && !dragging) {
-      target = Math.round(angle / (Math.PI * 2)) * Math.PI * 2;
-      lastInteraction = now;
-    }
+    // On ne touche jamais à la position choisie : pendant qu'on lit la page,
+    // la rotation automatique est simplement en pause.
+    if (window.scrollY > 4 && !dragging) lastInteraction = now;
 
     // défilement automatique, un écran toutes les 4 s, après 5 s sans interaction
     if (!reduceMotion && !dragging && now - lastInteraction > 5000) {
@@ -475,7 +473,8 @@ function init() {
       const t = Math.min(Math.max(raw, 0), 1);
 
       const flying = t > 0 && t < 1;
-      panel0.holder.visible = t === 0;
+      // l'écran de l'anneau s'efface pendant que sa copie volante apparaît
+      panel0.holder.visible = t < 0.14;
       img.style.visibility = t >= 1 || t === 0 ? "" : "hidden";
       layer.style.visibility = flying ? "visible" : "hidden";
       if (!flying) {
@@ -486,6 +485,13 @@ function init() {
       lastT = t;
 
       sourceCorners();
+      // vu de dos (au fond de l'anneau), l'écran apparaîtrait en miroir : on remet l'image à l'endroit
+      const area =
+        (src[1][0] - src[0][0]) * (src[3][1] - src[0][1]) - (src[1][1] - src[0][1]) * (src[3][0] - src[0][0]);
+      if (area < 0) {
+        [src[0], src[1]] = [src[1], src[0]];
+        [src[2], src[3]] = [src[3], src[2]];
+      }
       const dst = [
         [box.left, box.top],
         [box.right, box.top],
@@ -539,6 +545,8 @@ function init() {
       mat.uniforms.uvMax.value.set(1 + (crop.max[0] - 1) * e, 1 + (crop.max[1] - 1) * e);
       mat.uniforms.aspect.value = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) / Math.max(Math.hypot(p3[0] - p0[0], p3[1] - p0[1]), 1);
       mat.uniforms.radius.value = 0.045 * (1 - e);
+      // il sort de sa place : fondu d'apparition au tout début du trajet
+      mat.uniforms.alpha.value = smooth(Math.min(t / 0.16, 1));
 
       r2.render(fscene, fcam);
     }
