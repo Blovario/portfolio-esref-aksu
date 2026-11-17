@@ -252,10 +252,10 @@ ol {
   cursor: grab;
   touch-action: pan-y;
   opacity: 0;
-  transition: opacity 900ms ease;
+  transition: opacity 260ms ease;
 }
 
-.has-scene #hero-scene {
+.has-ring #hero-scene {
   opacity: 1;
 }
 
@@ -263,31 +263,61 @@ ol {
   cursor: grabbing;
 }
 
-/* Sans WebGL : trois captures en éventail */
-.hero-fallback {
+/* Image de remplacement de l'anneau : identique à la scène 3D, en CSS 3D */
+.hero-poster {
   position: absolute;
-  top: 18%;
-  right: 6%;
-  width: min(46vw, 40rem);
-  aspect-ratio: 16 / 10;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 260ms ease;
 }
 
-.hero-fallback img {
+.poster-floor {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: top;
-  border-radius: 0.6rem;
-  box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.45);
 }
 
-.hero-fallback img:nth-child(1) { transform: translate(-14%, 10%) rotate(-6deg); opacity: 0.5; }
-.hero-fallback img:nth-child(2) { transform: translate(-7%, 5%) rotate(-3deg); opacity: 0.75; }
+.poster-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 320px;
+  height: 200px;
+  overflow: hidden;
+  border-radius: var(--radius, 2.8% / 4.5%);
+  background: #2a2f2a;
+  transform-origin: 0 0;
+  backface-visibility: visible;
+}
 
-.has-scene .hero-fallback {
+.poster-panel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.poster-panel.is-back {
+  background: #232823;
+}
+
+.poster-panel.is-back img {
   display: none;
+}
+
+.poster-panel.is-front {
+  box-shadow: inset 0 0 0 var(--edge, 1px) rgba(122, 181, 64, 0.9);
+}
+
+.poster-fog {
+  position: absolute;
+  inset: 0;
+}
+
+.has-ring .hero-poster {
+  opacity: 0;
 }
 
 .hero-inner {
@@ -1372,13 +1402,6 @@ html:not(.has-scene) .hero-hint {
     flex: 0 0 min(14rem, 24svh);
   }
 
-  .hero-fallback {
-    top: 14%;
-    right: auto;
-    left: 50%;
-    width: 78vw;
-    transform: translateX(-42%);
-  }
 
   .hero-bar {
     flex-direction: column;

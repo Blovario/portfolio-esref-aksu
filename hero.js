@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { FOV, W, H, RADIUS_CORNER, RIG_TILT, FLOOR, ringRadius, heroView, pickSrc } from "./hero-geometry.js";
 
 /*
  * Hero 3D : les écrans des projets montés en anneau.
@@ -10,15 +11,7 @@ const hero = document.querySelector(".hero");
 const label = document.querySelector("#hero-current");
 const inner = document.querySelector(".hero-inner");
 
-// Les textures 3D prennent la même version de capture que celle que le navigateur
-// choisira pour la page (srcset/sizes), pour ne jamais télécharger deux fois la même image.
 const small = window.innerWidth < 800;
-const needPx = window.innerWidth * (window.innerWidth <= 800 ? 1 : 0.6) * (window.devicePixelRatio || 1);
-const pickSrc = (img) => {
-  if (!img) return null;
-  const light = needPx <= 800 && img.getAttribute("srcset")?.split(",")[0]?.trim().split(" ")[0];
-  return light || img.getAttribute("src");
-};
 const PIXEL_RATIO = Math.min(window.devicePixelRatio, small ? 1.5 : 2);
 
 const projects = [...document.querySelectorAll("[data-project]")].map((el) => ({
@@ -76,7 +69,7 @@ function init() {
   scene.background = new THREE.Color(INK);
   scene.fog = new THREE.Fog(INK, 9, 17);
 
-  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 60);
+  const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 60);
 
   const rig = new THREE.Group(); // position + inclinaison selon la souris
   const ring = new THREE.Group(); // rotation de l'anneau
@@ -84,15 +77,16 @@ function init() {
   scene.add(rig);
 
   const N = projects.length;
-  const W = 3.2;
-  const H = 2.0;
-  const R = (W * 1.18 * N) / (2 * Math.PI);
+  const R = ringRadius(N);
   const STEP = (Math.PI * 2) / N;
 
-  const { geo, outline } = roundedPanel(W, H, 0.09);
+  const { geo, outline } = roundedPanel(W, H, RADIUS_CORNER);
   const loader = new THREE.TextureLoader();
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
   const panels = [];
+  let texturesLeft = projects.filter((p) => p.image).length;
+  let ready = false; // toutes les captures sont dans la scène
+  let readyAt = -1;
 
   projects.forEach((p, i) => {
     const holder = new THREE.Group();
@@ -136,22 +130,23 @@ function init() {
         mat.map = tex;
         mat.color.set(0xffffff);
         mat.needsUpdate = true;
-      });
+        texturesLeft -= 1;
+      }, undefined, () => (texturesLeft -= 1));
     }
   });
 
   // Sol en points, pour donner de la profondeur
   const dots = [];
-  for (let x = -14; x <= 14; x += 0.7) {
-    for (let z = -14; z <= 14; z += 0.7) dots.push(x, 0, z);
+  for (let x = -FLOOR.extent; x <= FLOOR.extent + 1e-6; x += FLOOR.step) {
+    for (let z = -FLOOR.extent; z <= FLOOR.extent + 1e-6; z += FLOOR.step) dots.push(x, 0, z);
   }
   const floorGeo = new THREE.BufferGeometry();
   floorGeo.setAttribute("position", new THREE.Float32BufferAttribute(dots, 3));
   const floor = new THREE.Points(
     floorGeo,
-    new THREE.PointsMaterial({ color: 0x4b544b, size: 0.035, sizeAttenuation: true })
+    new THREE.PointsMaterial({ color: FLOOR.color, size: FLOOR.size, sizeAttenuation: true })
   );
-  floor.position.y = -H / 2 - 0.55;
+  floor.position.y = FLOOR.y;
   rig.add(floor);
 
   // --- État ---
@@ -195,38 +190,21 @@ function init() {
     const w = hero.clientWidth;
     const h = hero.clientHeight;
     renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-
-    const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const narrow = camera.aspect < 0.95;
-    let dist;
-
-    if (narrow) {
-      // Mobile : l'anneau tient dans l'espace libre entre le menu et le texte.
-      const top = parseFloat(getComputedStyle(hero).paddingTop) || 0;
-      const bottom = (inner?.offsetTop ?? h * 0.5) - 12;
-      const free = Math.max(bottom - top, 80);
-      // pixels par unité à la profondeur de l'écran de face
-      const ppu = Math.min((w * 0.84) / W, (free * 0.8) / H);
-      const front = h / (2 * tan * ppu);
-      dist = front + R;
-      const eye = 0.6;
-      camera.position.set(0, eye, dist);
-      camera.lookAt(0, eye, 0);
-      const centerPx = top + free / 2;
-      layout = { x: 0, y: eye + (h / 2 - centerPx) / ppu + R * Math.sin(0.1) };
-    } else {
-      dist = 14;
-      camera.position.set(0, 1.3, dist);
-      camera.lookAt(0, 0, 0);
-      const visibleW = 2 * tan * dist * camera.aspect;
-      layout = { x: Math.min(visibleW * 0.19, 3.2), y: 0.4 };
-    }
-
+    const view = heroView({
+      w,
+      h,
+      padTop: parseFloat(getComputedStyle(hero).paddingTop) || 0,
+      innerTop: inner?.offsetTop,
+      n: N,
+    });
+    camera.aspect = view.aspect;
+    camera.position.set(...view.cam);
+    camera.lookAt(...view.target);
     camera.updateProjectionMatrix();
+    layout = view.layout;
     // l'écran de face reste net, l'arrière de l'anneau se fond dans le fond
-    scene.fog.near = dist - R + 0.3;
-    scene.fog.far = dist + R * 0.9;
+    scene.fog.near = view.fog.near;
+    scene.fog.far = view.fog.far;
   }
 
   function pickPanel(e) {
@@ -327,7 +305,7 @@ function init() {
     if (window.scrollY > 4 && !dragging) lastInteraction = now;
 
     // défilement automatique, un écran toutes les 4 s, après 5 s sans interaction
-    if (!reduceMotion && !dragging && now - lastInteraction > 5000) {
+    if (ready && !reduceMotion && !dragging && now - lastInteraction > 5000) {
       target -= STEP;
       lastInteraction = now - 1000;
     }
@@ -335,13 +313,16 @@ function init() {
     if (!dragging) angle += (target - angle) * (1 - Math.exp(-dt * 4.5));
     ring.rotation.y = angle;
 
-    pointer.x += (pointer.tx - pointer.x) * (1 - Math.exp(-dt * 3));
-    pointer.y += (pointer.ty - pointer.y) * (1 - Math.exp(-dt * 3));
+    // tant que l'image de remplacement est affichée, la scène garde exactement la pose de départ
+    const live = ready ? 1 - Math.exp(-dt * 3) : 0;
+    pointer.x += (pointer.tx - pointer.x) * live;
+    pointer.y += (pointer.ty - pointer.y) * live;
 
-    const float = reduceMotion ? 0 : Math.sin(t * 0.6) * 0.06;
+    if (ready && readyAt < 0) readyAt = t;
+    const float = reduceMotion || !ready ? 0 : Math.sin((t - readyAt) * 0.6) * 0.06;
     rig.position.set(layout.x, layout.y + float, 0);
-    rig.rotation.x = 0.1 + pointer.y * 0.08;
-    rig.rotation.z = -0.045 + pointer.x * -0.03;
+    rig.rotation.x = RIG_TILT.x + pointer.y * 0.08;
+    rig.rotation.z = RIG_TILT.z + pointer.x * -0.03;
     rig.rotation.y = pointer.x * 0.12;
 
     const fi = frontIndex();
@@ -353,6 +334,11 @@ function init() {
 
     renderer.render(scene, camera);
     flight?.update();
+    // relais avec l'image de remplacement : on ne montre la 3D qu'une fois toutes les captures chargées
+    if (!ready && texturesLeft <= 0) {
+      ready = true;
+      requestAnimationFrame(() => document.documentElement.classList.add("has-ring"));
+    }
     requestAnimationFrame(frame);
   }
 
