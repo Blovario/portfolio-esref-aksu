@@ -424,68 +424,20 @@ function init() {
     const article = document.getElementById(projects[0].id);
     const img = article?.querySelector(".project-media img");
     if (!img) return null;
+    const slot = img.parentElement;
 
-    // Calque WebGL fixe par-dessus la page, transparent et non cliquable
-    const layer = document.createElement("canvas");
-    layer.className = "flight-layer";
-    layer.setAttribute("aria-hidden", "true");
-    document.body.appendChild(layer);
-    const r2 = new THREE.WebGLRenderer({ canvas: layer, antialias: true, alpha: true });
-    r2.setPixelRatio(PIXEL_RATIO);
-    r2.setClearColor(0x000000, 0);
-    r2.outputColorSpace = THREE.SRGBColorSpace;
-
-    const fscene = new THREE.Scene();
-    const fcam = new THREE.Camera(); // positions données directement en coordonnées écran
-
-    // Un quadrilatère libre, texturé avec une interpolation projective
-    // (les 4 coins viennent de l'écran 3D au départ, du rectangle de l'image à l'arrivée)
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(12), 3));
-    g.setAttribute("uvq", new THREE.BufferAttribute(new Float32Array(12), 3));
-    g.setIndex([0, 1, 2, 0, 2, 3]);
-    const tex = new THREE.TextureLoader().load(pickSrc(img));
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = r2.capabilities.getMaxAnisotropy();
-    const mat = new THREE.ShaderMaterial({
-      transparent: true,
-      depthTest: false,
-      side: THREE.DoubleSide,
-      uniforms: {
-        map: { value: tex },
-        uvMin: { value: new THREE.Vector2(0, 0) },
-        uvMax: { value: new THREE.Vector2(1, 1) },
-        radius: { value: 0.03 },
-        aspect: { value: 1.6 },
-        alpha: { value: 1 },
-      },
-      vertexShader: `
-        attribute vec3 uvq;
-        varying vec3 vUvq;
-        void main() {
-          vUvq = uvq;
-          gl_Position = vec4(position.xy, 0.0, 1.0);
-        }`,
-      fragmentShader: `
-        uniform sampler2D map;
-        uniform vec2 uvMin, uvMax;
-        uniform float radius, aspect, alpha;
-        varying vec3 vUvq;
-        void main() {
-          vec2 uv = vUvq.xy / vUvq.z;
-          // coins arrondis qui s'effacent à l'arrivée
-          vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
-          vec2 b = vec2(aspect, 1.0) * 0.5 - radius;
-          float d = length(max(abs(p) - b, 0.0)) - radius;
-          if (d > 0.0) discard;
-          vec4 c = texture2D(map, mix(uvMin, uvMax, uv));
-          gl_FragColor = vec4(c.rgb, c.a * alpha);
-          #include <colorspace_fragment>
-        }`,
-    });
-    const quad = new THREE.Mesh(g, mat);
-    quad.frustumCulled = false;
-    fscene.add(quad);
+    // Une carte HTML posée DANS la page, à l'emplacement de la capture : le navigateur la fait
+    // défiler lui-même, parfaitement en phase avec la page (pas de saccades sur iPhone).
+    // Le script ne calcule que sa déformation (CSS 3D) entre l'anneau et sa place finale.
+    const card = document.createElement("div");
+    card.className = "flight-card";
+    card.setAttribute("aria-hidden", "true");
+    const pic = document.createElement("img");
+    pic.alt = "";
+    pic.decoding = "async";
+    pic.src = pickSrc(img);
+    card.appendChild(pic);
+    document.body.appendChild(card);
 
     const corners = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
     const local = [
@@ -496,64 +448,59 @@ function init() {
     ];
     const src = local.map(() => [0, 0]);
     const panel0 = panels[0];
-    let lastT = -1;
+    const R_X = ((RADIUS_CORNER / W) * 100).toFixed(3);
+    const R_Y = ((RADIUS_CORNER / H) * 100).toFixed(3);
 
-    // Taille en pixels réels de la fenêtre visible. Sur iPhone, 100vh ne correspond pas à la
-    // zone visible (barre d'adresse) : le calque serait étiré, d'où l'image « zoomée ».
-    let layerW = 0;
-    let layerH = 0;
-    function sizeLayer() {
-      if (layerW === window.innerWidth && layerH === window.innerHeight) return;
-      layerW = window.innerWidth;
-      layerH = window.innerHeight;
-      r2.setSize(layerW, layerH, true);
-    }
-    sizeLayer();
-    window.addEventListener("resize", sizeLayer);
-
-    // Coins de l'écran 01 dans l'anneau, en pixels de la fenêtre
+    // Coins de l'écran 01 dans l'anneau, en coordonnées de la PAGE (pas de la fenêtre)
     function sourceCorners() {
       const rect = canvas.getBoundingClientRect();
       panel0.holder.updateWorldMatrix(true, false);
       local.forEach(([x, y], i) => {
         corners[i].set(x, y, 0).applyMatrix4(panel0.holder.matrixWorld).project(camera);
-        src[i][0] = rect.left + ((corners[i].x + 1) / 2) * rect.width;
-        src[i][1] = rect.top + ((1 - corners[i].y) / 2) * rect.height;
+        src[i][0] = rect.left + window.scrollX + ((corners[i].x + 1) / 2) * rect.width;
+        src[i][1] = rect.top + window.scrollY + ((1 - corners[i].y) / 2) * rect.height;
       });
     }
 
-    // Partie visible de l'image dans son cadre (object-fit: cover, calé en haut)
-    function targetCrop(box) {
-      const ia = (img.naturalWidth || 1600) / (img.naturalHeight || 1000);
-      const ba = box.width / box.height;
-      if (ba > ia) return { min: [0, 1 - ia / ba], max: [1, 1] };
-      const k = ba / ia;
-      return { min: [(1 - k) / 2, 0], max: [(1 + k) / 2, 1] };
+    // Transformation projective : rectangle de la carte → quadrilatère
+    function matrix3d(p, ew, eh) {
+      const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = p;
+      const dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2;
+      const sx = x0 - x1 + x2 - x3, sy = y0 - y1 + y2 - y3;
+      const den = dx1 * dy2 - dx2 * dy1 || 1e-9;
+      const g = (sx * dy2 - dx2 * sy) / den;
+      const h = (dx1 * sy - sx * dy1) / den;
+      const a = x1 - x0 + g * x1, b = x3 - x0 + h * x3;
+      const d = y1 - y0 + g * y1, e = y3 - y0 + h * y3;
+      const m = [a / ew, d / ew, 0, g / ew, b / eh, e / eh, 0, h / eh, 0, 0, 1, 0, x0, y0, 0, 1];
+      return `matrix3d(${m.map((v) => +v.toFixed(8)).join(",")})`;
     }
 
     const smooth = (t) => t * t * (3 - 2 * t);
+    let shown = null;
+
+    function setShown(on) {
+      if (shown === on) return;
+      shown = on;
+      card.style.display = on ? "block" : "none";
+    }
 
     function update() {
-      sizeLayer(); // la barre d'adresse d'iOS change la hauteur visible pendant le scroll
       const vh = window.innerHeight;
-      const box = img.parentElement.getBoundingClientRect();
+      const box = slot.getBoundingClientRect();
+      const top = box.top + window.scrollY;
+      const left = box.left + window.scrollX;
       // fin du trajet : la capture est centrée dans l'écran (ou au plus haut possible)
-      const endScroll = Math.max(box.top + window.scrollY - Math.max((vh - box.height) / 2, 80), vh * 0.35);
+      const endScroll = Math.max(top - Math.max((vh - box.height) / 2, 80), vh * 0.35);
       const startScroll = vh * 0.04;
-      const raw = (window.scrollY - startScroll) / (endScroll - startScroll);
-      const t = Math.min(Math.max(raw, 0), 1);
+      const t = Math.min(Math.max((window.scrollY - startScroll) / (endScroll - startScroll), 0), 1);
 
       const flying = t > 0 && t < 1;
-      // l'écran de l'anneau s'efface pendant que sa copie volante apparaît
+      // l'écran de l'anneau s'efface pendant que sa copie apparaît
       panel0.holder.visible = t < 0.14;
-      img.style.visibility = t >= 1 || t === 0 ? "" : "hidden";
-      layer.style.visibility = flying ? "visible" : "hidden";
-      if (!flying) {
-        if (lastT !== t) r2.clear();
-        lastT = t;
-        return;
-      }
-      lastT = t;
+      img.style.visibility = flying ? "hidden" : "";
+      setShown(flying);
+      if (!flying) return;
 
       sourceCorners();
       // vu de dos (au fond de l'anneau), l'écran apparaîtrait en miroir : on remet l'image à l'endroit
@@ -563,63 +510,47 @@ function init() {
         [src[0], src[1]] = [src[1], src[0]];
         [src[2], src[3]] = [src[3], src[2]];
       }
+      const w = box.width;
+      const h = box.height;
       const dst = [
-        [box.left, box.top],
-        [box.right, box.top],
-        [box.right, box.bottom],
-        [box.left, box.bottom],
+        [left, top],
+        [left + w, top],
+        [left + w, top + h],
+        [left, top + h],
       ];
       const e = smooth(t);
       // petit arc : l'écran se soulève vers nous à mi-chemin
       const lift = Math.sin(Math.PI * e) * 0.06;
-      const cx = (box.left + box.right) / 2;
-      const cy = (box.top + box.bottom) / 2;
+      const mx = (src.reduce((a, p) => a + p[0], 0) / 4) * (1 - e) + (left + w / 2) * e;
+      const my = (src.reduce((a, p) => a + p[1], 0) / 4) * (1 - e) + (top + h / 2) * e;
+      // coins relatifs à la carte, elle-même posée sur l'emplacement de la capture
       const pts = src.map(([sx, sy], i) => {
-        let x = sx + (dst[i][0] - sx) * e;
-        let y = sy + (dst[i][1] - sy) * e;
-        const mx = (src.reduce((a, p) => a + p[0], 0) / 4) * (1 - e) + cx * e;
-        const my = (src.reduce((a, p) => a + p[1], 0) / 4) * (1 - e) + cy * e;
-        x = mx + (x - mx) * (1 + lift);
-        y = my + (y - my) * (1 + lift);
-        return [x, y];
+        const x = sx + (dst[i][0] - sx) * e;
+        const y = sy + (dst[i][1] - sy) * e;
+        return [mx + (x - mx) * (1 + lift) - left, my + (y - my) * (1 + lift) - top];
       });
 
-      // interpolation projective : q dépend de l'intersection des diagonales
-      const [p0, p1, p2, p3] = pts;
-      const d1x = p2[0] - p0[0], d1y = p2[1] - p0[1];
-      const d2x = p3[0] - p1[0], d2y = p3[1] - p1[1];
-      const den = d1x * d2y - d1y * d2x || 1e-6;
-      const s = ((p1[0] - p0[0]) * d2y - (p1[1] - p0[1]) * d2x) / den;
-      const c = [p0[0] + s * d1x, p0[1] + s * d1y];
-      const dist = pts.map((p) => Math.hypot(p[0] - c[0], p[1] - c[1]));
-      const uvs = [
-        [0, 1],
-        [1, 1],
-        [1, 0],
-        [0, 0],
-      ];
-      const pos = g.attributes.position.array;
-      const uvq = g.attributes.uvq.array;
-      pts.forEach((p, i) => {
-        const q = (dist[i] + dist[(i + 2) % 4]) / Math.max(dist[(i + 2) % 4], 1e-6);
-        pos[i * 3] = (p[0] / window.innerWidth) * 2 - 1;
-        pos[i * 3 + 1] = 1 - (p[1] / vh) * 2;
-        uvq[i * 3] = uvs[i][0] * q;
-        uvq[i * 3 + 1] = uvs[i][1] * q;
-        uvq[i * 3 + 2] = q;
-      });
-      g.attributes.position.needsUpdate = true;
-      g.attributes.uvq.needsUpdate = true;
+      card.style.top = `${top}px`;
+      card.style.left = `${left}px`;
+      card.style.width = `${w}px`;
+      card.style.height = `${h}px`;
+      card.style.transform = matrix3d(pts, w, h);
+      card.style.opacity = smooth(Math.min(t / 0.16, 1)).toFixed(3); // il sort de sa place en fondu
+      card.style.borderRadius = `${(R_X * (1 - e)).toFixed(3)}% / ${(R_Y * (1 - e)).toFixed(3)}%`;
 
-      const crop = targetCrop(box);
-      mat.uniforms.uvMin.value.set(crop.min[0] * e, crop.min[1] * e);
-      mat.uniforms.uvMax.value.set(1 + (crop.max[0] - 1) * e, 1 + (crop.max[1] - 1) * e);
-      mat.uniforms.aspect.value = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) / Math.max(Math.hypot(p3[0] - p0[0], p3[1] - p0[1]), 1);
-      mat.uniforms.radius.value = 0.045 * (1 - e);
-      // il sort de sa place : fondu d'apparition au tout début du trajet
-      mat.uniforms.alpha.value = smooth(Math.min(t / 0.16, 1));
-
-      r2.render(fscene, fcam);
+      // recadrage : image entière dans l'anneau, puis même cadrage que la capture (cover, calée en haut)
+      const ia = (img.naturalWidth || 1600) / (img.naturalHeight || 1000);
+      const ba = w / h;
+      if (ba > ia) {
+        pic.style.width = "100%";
+        pic.style.left = "0";
+        pic.style.height = `${(100 * (1 + (ba / ia - 1) * e)).toFixed(3)}%`;
+      } else {
+        const k = 1 + (ia / ba - 1) * e;
+        pic.style.height = "100%";
+        pic.style.width = `${(100 * k).toFixed(3)}%`;
+        pic.style.left = `${(-50 * (k - 1)).toFixed(3)}%`;
+      }
     }
 
     // hors du hero, la boucle 3D est en pause : on suit le scroll directement
@@ -634,6 +565,7 @@ function init() {
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
+    setShown(false);
     return { update };
   }
 

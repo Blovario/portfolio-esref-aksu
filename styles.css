@@ -25,12 +25,15 @@
 }
 
 html {
+  /* la carte du passage de relais peut déborder pendant son trajet : pas de défilement horizontal */
+  overflow-x: clip;
   scroll-behavior: smooth;
   scroll-padding-top: 5rem;
 }
 
 body {
   margin: 0;
+  overflow-x: clip;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--sans);
@@ -1638,12 +1641,23 @@ mini…) : tout le hero tient dans l'écran */
   }
 }
 
-/* Calque du passage de relais hero → premier projet */
-.flight-layer {
-  position: fixed;
+/* Passage de relais hero → premier projet : une carte posée dans la page, déformée en CSS 3D */
+.flight-card {
+  position: absolute;
+  z-index: 90;
+  overflow: hidden;
+  transform-origin: 0 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+  background: #2a2f2a;
+}
+
+.flight-card img {
+  position: absolute;
   top: 0;
   left: 0;
-  z-index: 90;
-  pointer-events: none;
-  visibility: hidden;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: fill;
 }
