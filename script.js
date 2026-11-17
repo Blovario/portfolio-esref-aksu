@@ -108,6 +108,28 @@ document.documentElement.classList.add("js");
     observedSections.forEach((section) => sectionObserver.observe(section));
   }
 
+  // Heure locale à Vendôme, mise à jour chaque minute
+  const localTime = document.querySelector("#local-time");
+
+  function updateClock() {
+    if (!localTime) return;
+    const now = new Date();
+    const time = new Intl.DateTimeFormat("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Paris",
+    }).format(now);
+    const hour = Number(
+      new Intl.DateTimeFormat("fr-FR", { hour: "numeric", hourCycle: "h23", timeZone: "Europe/Paris" }).format(now)
+    );
+    localTime.textContent = `il est ${time.replace(":", " h ")}`;
+    localTime.setAttribute("datetime", now.toISOString());
+    document.querySelector(".contact-clock")?.classList.toggle("is-night", hour >= 21 || hour < 8);
+  }
+
+  updateClock();
+  setInterval(updateClock, 30000);
+
   const form = document.querySelector("#contact-form");
   const formResult = document.querySelector("#form-result");
 
