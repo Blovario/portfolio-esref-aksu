@@ -10,7 +10,37 @@ export const W = 3.2;
 export const H = 2.0;
 export const RADIUS_CORNER = 0.09;
 export const RIG_TILT = { x: 0.1, z: -0.045 };
-export const FLOOR = { y: -H / 2 - 0.55, step: 0.7, extent: 14, size: 0.035, color: "#4b544b" };
+// Sol : des points disposés en cercles autour de l'anneau,
+// serrés près de lui, de plus en plus espacés en s'éloignant
+export const FLOOR = {
+  y: -H / 2 - 0.5,
+  from: 0.6, // premier cercle (unités)
+  to: 8, // dernier cercle
+  size: 0.062,
+  color: "#68726a",
+  fadeFrom: 4.2, // les points s'estompent entre ces deux rayons
+  fadeTo: 7.6,
+};
+
+// Positions des points du sol : [x, z, hasard 0..1], identiques pour la 3D et l'image fixe
+export function floorPoints() {
+  const pts = [];
+  let r = FLOOR.from;
+  let ring = 0;
+  while (r <= FLOOR.to) {
+    const arc = 0.22 + 0.075 * r; // écart entre deux points d'un même cercle
+    const count = Math.max(6, Math.round((2 * Math.PI * r) / arc));
+    const offset = ring * 2.39996; // angle d'or : évite les alignements en rayons
+    for (let i = 0; i < count; i++) {
+      const a = offset + (i / count) * Math.PI * 2;
+      const h = Math.sin(ring * 127.1 + i * 311.7) * 43758.5453;
+      pts.push([Math.cos(a) * r, Math.sin(a) * r, h - Math.floor(h)]);
+    }
+    r += 0.26 + 0.07 * r; // écart entre deux cercles
+    ring += 1;
+  }
+  return pts;
+}
 export const INK = "#171a18";
 
 export function ringRadius(n) {
@@ -86,6 +116,7 @@ export function heroView({ w, h, padTop, innerTop, textRight, stacked, n }) {
   }
 
   return {
+    stacked,
     aspect,
     R,
     cam,

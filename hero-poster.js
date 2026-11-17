@@ -1,4 +1,4 @@
-import { FOV, W, H, RADIUS_CORNER, RIG_TILT, FLOOR, layoutHero, pickSrc } from "./hero-geometry.js";
+import { FOV, W, H, RADIUS_CORNER, RIG_TILT, FLOOR, floorPoints, layoutHero, pickSrc } from "./hero-geometry.js";
 
 /*
  * Image de remplacement de l'anneau, affichée pendant le chargement de la 3D
@@ -54,7 +54,7 @@ function matrix3d(p) {
   return `matrix3d(${m.map((v) => +v.toFixed(8)).join(",")})`;
 }
 
-const panels = sources.map((src) => {
+function makePanel(src) {
   const el = document.createElement("div");
   el.className = "poster-panel";
   if (src) {
@@ -69,7 +69,8 @@ const panels = sources.map((src) => {
   el.appendChild(fog);
   poster.appendChild(el);
   return { el, fog };
-});
+}
+const panels = sources.map((src) => makePanel(src));
 
 const dotsCanvas = document.createElement("canvas");
 dotsCanvas.className = "poster-floor";
@@ -105,24 +106,26 @@ function layout() {
   };
   fogAt = (depth) => smoothstep(view.fog.near, view.fog.far, depth);
 
-  // --- sol en points ---
+  // --- sol : points en cercles autour de l'anneau, comme dans la scène 3D ---
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   dotsCanvas.width = Math.round(w * dpr);
   dotsCanvas.height = Math.round(h * dpr);
   const ctx = dotsCanvas.getContext("2d");
   ctx.scale(dpr, dpr);
-  const base = [0x4b, 0x54, 0x4b];
+  const base = [0x68, 0x72, 0x6a];
   const ink = [0x17, 0x1a, 0x18];
-  for (let x = -FLOOR.extent; x <= FLOOR.extent + 1e-6; x += FLOOR.step) {
-    for (let z = -FLOOR.extent; z <= FLOOR.extent + 1e-6; z += FLOOR.step) {
-      const pt = project(rig([x, FLOOR.y, z], view.layout));
-      if (pt.depth <= 0.1 || pt.x < -4 || pt.y < -4 || pt.x > w + 4 || pt.y > h + 4) continue;
-      const k = fogAt(pt.depth);
-      const size = (FLOOR.size * (h / 2)) / pt.depth; // même formule que PointsMaterial
-      const c = base.map((v, j) => Math.round(v + (ink[j] - v) * k));
-      ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
-      ctx.fillRect(pt.x - size / 2, pt.y - size / 2, size, size);
-    }
+  for (const [x, z] of floorPoints()) {
+    const pt = project(rig([x, FLOOR.y, z], view.layout));
+    if (pt.depth <= 0.1 || pt.x < -4 || pt.y < -4 || pt.x > w + 4 || pt.y > h + 4) continue;
+    const edge = 1 - smoothstep(FLOOR.fadeFrom, FLOOR.fadeTo, Math.hypot(x, z));
+    if (edge <= 0) continue;
+    const k = fogAt(pt.depth);
+    const c = base.map((v, j) => Math.round(v + (ink[j] - v) * k));
+    const size = (FLOOR.size * (h / 2)) / pt.depth; // même formule que la scène 3D
+    ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${edge.toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, size * 0.44, 0, Math.PI * 2);
+    ctx.fill();
   }
   return true;
 }

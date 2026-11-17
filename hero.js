@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { FOV, W, H, RADIUS_CORNER, RIG_TILT, FLOOR, ringRadius, layoutHero, pickSrc } from "./hero-geometry.js";
+import { FOV, W, H, RADIUS_CORNER, RIG_TILT, FLOOR, floorPoints, ringRadius, layoutHero, pickSrc } from "./hero-geometry.js";
 
 /*
  * Hero 3D : les écrans des projets montés en anneau.
@@ -121,6 +121,7 @@ function init() {
 
     holder.add(front, back, edge);
     ring.add(holder);
+
     panels.push({ holder, front, edge, mat });
 
     if (p.image) {
@@ -145,48 +146,58 @@ function init() {
     }
   });
 
-  // Sol en points, pour donner de la profondeur
-  const dots = [];
-  for (let x = -FLOOR.extent; x <= FLOOR.extent + 1e-6; x += FLOOR.step) {
-    for (let z = -FLOOR.extent; z <= FLOOR.extent + 1e-6; z += FLOOR.step) dots.push(x, 0, z);
-  }
+  // Sol : des points en cercles autour de l'anneau. Ils s'allument en vague à l'arrivée,
+  // puis, de temps en temps, l'un d'eux s'éclaire brièvement en vert.
+  const fp = floorPoints();
   const floorGeo = new THREE.BufferGeometry();
-  floorGeo.setAttribute("position", new THREE.Float32BufferAttribute(dots, 3));
-  // un léger hasard par point : ils s'allument un à un, pas en anneau parfait
-  floorGeo.setAttribute("aRand", new THREE.Float32BufferAttribute(dots.filter((_, k) => k % 3 === 0).map(() => Math.random()), 1));
-  // Même rendu que PointsMaterial (taille selon la distance, brouillard), plus une vague d'allumage
+  floorGeo.setAttribute("position", new THREE.Float32BufferAttribute(fp.flatMap(([x, z]) => [x, 0, z]), 3));
+  floorGeo.setAttribute("aRand", new THREE.Float32BufferAttribute(fp.map((p) => p[2]), 1));
   const floorMat = new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
     uniforms: {
       uColor: { value: new THREE.Color(FLOOR.color) },
+      uGreen: { value: new THREE.Color(0x7ab540) },
       uFog: { value: new THREE.Color(0x171a18) },
       uFogNear: { value: 0 },
       uFogFar: { value: 1 },
       uSize: { value: FLOOR.size },
       uScale: { value: 1 },
       uReveal: { value: 0 }, // rayon (en unités) déjà allumé autour de l'anneau
+      uFadeFrom: { value: FLOOR.fadeFrom },
+      uFadeTo: { value: FLOOR.fadeTo },
+      uTime: { value: 0 },
+      uBlink: { value: 0 }, // 0 pendant l'arrivée, 1 ensuite
     },
     vertexShader: `
       attribute float aRand;
-      uniform float uSize, uScale, uReveal, uFogNear, uFogFar;
-      varying float vAlpha, vFog;
+      uniform float uSize, uScale, uReveal, uFogNear, uFogFar, uFadeFrom, uFadeTo, uTime, uBlink;
+      varying float vAlpha, vLit, vFog, vSpark;
       void main() {
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         gl_Position = projectionMatrix * mv;
-        gl_PointSize = uSize * uScale / -mv.z;
-        float d = length(position.xz) + aRand * 2.2;
-        vAlpha = clamp((uReveal - d) / 0.8, 0.0, 1.0);
+        float r = length(position.xz);
+        vLit = clamp((uReveal - r - aRand * 1.6) / 0.8, 0.0, 1.0);
+        vAlpha = vLit * (1.0 - smoothstep(uFadeFrom, uFadeTo, r));
         vFog = smoothstep(uFogNear, uFogFar, -mv.z);
+        // une étincelle rare : chaque point s'éclaire une fois toutes les 2 min environ,
+        // pendant une demi-seconde (2 ou 3 points à la fois sur l'ensemble du sol)
+        float ph = fract(uTime / 120.0 + aRand * 17.0);
+        vSpark = uBlink * smoothstep(0.0, 0.0008, ph) * (1.0 - smoothstep(0.0008, 0.004, ph));
+        gl_PointSize = uSize * uScale / -mv.z * (1.0 + vSpark * 0.8);
       }`,
     fragmentShader: `
-      uniform vec3 uColor, uFog;
-      varying float vAlpha, vFog;
+      uniform vec3 uColor, uGreen, uFog;
+      varying float vAlpha, vLit, vFog, vSpark;
       void main() {
-        if (vAlpha <= 0.0) discard;
-        // petit éclat vert au moment où le point s'allume
-        vec3 c = mix(vec3(0.48, 0.71, 0.25), uColor, smoothstep(0.0, 1.0, vAlpha));
-        gl_FragColor = vec4(mix(c, uFog, vFog), vAlpha);
+        // points ronds
+        vec2 d = gl_PointCoord - 0.5;
+        float m = 1.0 - smoothstep(0.38, 0.5, length(d));
+        if (vAlpha * m <= 0.0) discard;
+        // éclat vert à l'allumage, puis étincelles occasionnelles
+        float g = max(1.0 - smoothstep(0.0, 1.0, vLit), vSpark);
+        vec3 c = mix(uColor, uGreen, g);
+        gl_FragColor = vec4(mix(c, uFog, vFog), vAlpha * m * max(1.0, vSpark * 1.6));
         #include <colorspace_fragment>
       }`,
   });
@@ -239,12 +250,12 @@ function init() {
     camera.lookAt(...view.target);
     camera.updateProjectionMatrix();
     layout = view.layout;
-    // l'écran de face reste net, l'arrière de l'anneau se fond dans le fond
-    scene.fog.near = view.fog.near;
-    scene.fog.far = view.fog.far;
     floorMat.uniforms.uFogNear.value = view.fog.near;
     floorMat.uniforms.uFogFar.value = view.fog.far;
     floorMat.uniforms.uScale.value = hero.clientHeight * 0.5 * renderer.getPixelRatio();
+    // l'écran de face reste net, l'arrière de l'anneau se fond dans le fond
+    scene.fog.near = view.fog.near;
+    scene.fog.far = view.fog.far;
   }
 
   function pickPanel(e) {
@@ -359,7 +370,10 @@ function init() {
     ring.scale.setScalar(Math.max(easeBack(k), 0.001));
     ring.visible = ready || warming;
     ring.rotation.y = angle - STEP * 1.5 * (1 - easeOut(k));
-    floorMat.uniforms.uReveal.value = reduceMotion ? 99 : easeOut((k - 0.15) / 1.6) * (FLOOR.extent * 1.5 + 3);
+    // les points s'allument en vague depuis le centre de l'anneau, puis scintillent de temps en temps
+    floorMat.uniforms.uReveal.value = reduceMotion ? 99 : easeOut((k - 0.15) / 1.6) * (FLOOR.to + 3);
+    floorMat.uniforms.uTime.value = t;
+    floorMat.uniforms.uBlink.value = reduceMotion ? 0 : clamp01(k - 1.6);
 
     // la souris ne fait bouger l'anneau qu'une fois son arrivée terminée
     const live = k >= 1 ? 1 - Math.exp(-dt * 3) : 0;
