@@ -14,19 +14,34 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..100,600..900&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="cc9a91f1-5fa1-43cc-85fe-d30d33c464ad"></script>
   </head>
   <body class="legal-page">
     <a class="skip-link" href="#main-content">Aller au contenu</a>
     <header class="site-header">
-      <nav class="site-nav shell" aria-label="Navigation secondaire">
-        <a class="brand" href="index.html" aria-label="Retour au portfolio">
+      <nav class="site-nav shell" aria-label="Navigation principale">
+        <a class="brand" href="index.html" aria-label="Esref Aksu — Accueil">
           <span aria-hidden="true">&lt;</span>EA<span aria-hidden="true">/&gt;</span>
         </a>
-        <a class="legal-header-link" href="index.html">← Retour au portfolio</a>
+        <button
+          class="menu-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="primary-navigation"
+          aria-label="Ouvrir le menu"
+        >
+          <span></span>
+          <span></span>
+        </button>
+        <ul class="nav-list" id="primary-navigation">
+          <li><a class="nav-link" href="index.html#projets">Projets</a></li>
+          <li><a class="nav-link" href="index.html#expertise">Ce que je fais</a></li>
+          <li><a class="nav-link nav-contact" href="index.html#contact">Me contacter</a></li>
+        </ul>
       </nav>
     </header>
 
@@ -155,12 +170,18 @@
             <article class="legal-card legal-card--wide">
               <h2>05. Cookies et services tiers</h2>
               <p>
-                Ce site n'utilise pas de cookie publicitaire ni d'outil de
-                mesure d'audience. Lors de la consultation, GitHub Pages
-                traite les données techniques nécessaires à l'hébergement et
-                Google Fonts fournit les polices de caractères, ce qui peut
-                entraîner la transmission de données techniques, notamment
-                l'adresse IP, à ces prestataires.
+                Ce site n'utilise aucun cookie, ni publicitaire ni de mesure.
+                Lors de la consultation, GitHub Pages traite les données
+                techniques nécessaires à l'hébergement, Google Fonts fournit
+                les polices de caractères et jsDelivr la bibliothèque 3D,
+                ce qui peut entraîner la transmission de données techniques,
+                notamment l'adresse IP, à ces prestataires.
+              </p>
+              <p>
+                La fréquentation est mesurée avec Umami, un outil sans cookie.
+                Il compte les pages vues,
+                la page d'origine, le type d'appareil et le pays, sans
+                identifier les visiteurs ni les suivre d'un site à l'autre.
               </p>
               <p>
                 Pour en savoir plus, consultez les politiques de confidentialité
@@ -176,6 +197,12 @@
                   target="_blank"
                   rel="noopener noreferrer"
                   >Google</a
+                >,
+                <a
+                  href="https://umami.is/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Umami</a
                 >
                 et
                 <a
@@ -189,7 +216,7 @@
           </div>
 
           <p class="legal-meta">
-            Dernière mise à jour : 26 juillet 2026
+            Dernière mise à jour : 17 novembre 2026
           </p>
         </div>
       </section>
@@ -198,9 +225,10 @@
     <footer class="site-footer">
       <div class="shell footer-row">
         <p>© 2026 Esref Aksu</p>
-        <p>Ingénieur &amp; développeur freelance</p>
+        <p>Vendôme · Paris</p>
         <a href="index.html">Retour au portfolio</a>
       </div>
     </footer>
+    <script src="script.js"></script>
   </body>
 </html>

@@ -10,12 +10,23 @@ const hero = document.querySelector(".hero");
 const label = document.querySelector("#hero-current");
 const inner = document.querySelector(".hero-inner");
 
+// Les textures 3D prennent la même version de capture que celle que le navigateur
+// choisira pour la page (srcset/sizes), pour ne jamais télécharger deux fois la même image.
+const small = window.innerWidth < 800;
+const needPx = window.innerWidth * (window.innerWidth <= 800 ? 1 : 0.6) * (window.devicePixelRatio || 1);
+const pickSrc = (img) => {
+  if (!img) return null;
+  const light = needPx <= 800 && img.getAttribute("srcset")?.split(",")[0]?.trim().split(" ")[0];
+  return light || img.getAttribute("src");
+};
+const PIXEL_RATIO = Math.min(window.devicePixelRatio, small ? 1.5 : 2);
+
 const projects = [...document.querySelectorAll("[data-project]")].map((el) => ({
   id: el.id,
   n: el.querySelector(".project-kicker")?.textContent.trim().slice(0, 2),
   name: el.dataset.project,
   kind: el.dataset.kind,
-  image: el.querySelector(".project-media img")?.getAttribute("src"),
+  image: pickSrc(el.querySelector(".project-media img")),
 }));
 
 function webglAvailable() {
@@ -58,7 +69,7 @@ function init() {
   const GREEN = 0x7ab540;
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(PIXEL_RATIO);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
@@ -368,7 +379,7 @@ function init() {
     layer.setAttribute("aria-hidden", "true");
     document.body.appendChild(layer);
     const r2 = new THREE.WebGLRenderer({ canvas: layer, antialias: true, alpha: true });
-    r2.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    r2.setPixelRatio(PIXEL_RATIO);
     r2.setClearColor(0x000000, 0);
     r2.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -381,7 +392,7 @@ function init() {
     g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(12), 3));
     g.setAttribute("uvq", new THREE.BufferAttribute(new Float32Array(12), 3));
     g.setIndex([0, 1, 2, 0, 2, 3]);
-    const tex = new THREE.TextureLoader().load(img.getAttribute("src"));
+    const tex = new THREE.TextureLoader().load(pickSrc(img));
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = r2.capabilities.getMaxAnisotropy();
     const mat = new THREE.ShaderMaterial({

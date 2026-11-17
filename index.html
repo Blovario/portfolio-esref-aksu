@@ -21,7 +21,7 @@
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:alt" content="Esref Aksu — Ingénieur et développeur freelance" />
+    <meta property="og:image:alt" content="Esref Aksu, développeur freelance à Vendôme et Paris : sites, boutiques et logiciels" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Esref Aksu — Développeur freelance à Vendôme et Paris" />
     <meta name="twitter:description" content="Sites web, boutiques en ligne, SaaS et outils métier." />
@@ -96,6 +96,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="cc9a91f1-5fa1-43cc-85fe-d30d33c464ad"></script>
     <script type="importmap">
       { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
     </script>
@@ -131,9 +132,9 @@
         <canvas id="hero-scene" aria-hidden="true"></canvas>
 
         <div class="hero-fallback" aria-hidden="true">
-          <img src="assets/projets/animarket.webp" alt="" />
-          <img src="assets/projets/yael-fabrik.webp" alt="" />
-          <img src="assets/projets/mon-carnet-client.webp" alt="" />
+          <img loading="lazy" src="assets/projets/animarket.webp" srcset="assets/projets/animarket-800.webp 800w, assets/projets/animarket.webp 1600w" sizes="(max-width: 800px) 100vw, 60vw" alt="" />
+          <img loading="lazy" src="assets/projets/yael-fabrik.webp" srcset="assets/projets/yael-fabrik-800.webp 800w, assets/projets/yael-fabrik.webp 1600w" sizes="(max-width: 800px) 100vw, 60vw" alt="" />
+          <img loading="lazy" src="assets/projets/mon-carnet-client.webp" srcset="assets/projets/mon-carnet-client-800.webp 800w, assets/projets/mon-carnet-client.webp 1600w" sizes="(max-width: 800px) 100vw, 60vw" alt="" />
         </div>
 
         <div class="shell hero-inner">
@@ -164,8 +165,8 @@
 
           <div class="project-list">
             <article class="project project--right" id="projet-mon-carnet-client" data-project="Mon Carnet Client" data-kind="SaaS fidélité" data-reveal>
-              <a class="project-media" href="https://moncarnetclient.fr" target="_blank" rel="noopener noreferrer" aria-label="Voir le site Mon Carnet Client">
-                <img src="assets/projets/mon-carnet-client.webp" width="1600" height="1000" loading="eager" decoding="async" alt="Page d’accueil de Mon Carnet Client : une carte de fidélité dans Apple Wallet et l’application de scan" />
+              <a data-umami-event="Visite projet" data-umami-event-site="moncarnetclient.fr" class="project-media" href="https://moncarnetclient.fr" target="_blank" rel="noopener noreferrer" aria-label="Voir le site Mon Carnet Client">
+                <img src="assets/projets/mon-carnet-client.webp" srcset="assets/projets/mon-carnet-client-800.webp 800w, assets/projets/mon-carnet-client.webp 1600w" sizes="(max-width: 800px) 100vw, 60vw" width="1600" height="1000" loading="eager" decoding="async" alt="Page d’accueil de Mon Carnet Client : une carte de fidélité dans Apple Wallet et l’application de scan" />
               </a>
               <div class="project-copy">
                 <div>
@@ -181,7 +182,7 @@
                   <p><span>Rôle</span> Tout&nbsp;: produit, design, code</p>
                   <p><span>Stack</span> Next.js, NestJS, Prisma, PostgreSQL, React Native</p>
                 </div>
-                <a class="text-link" href="https://moncarnetclient.fr" target="_blank" rel="noopener noreferrer">moncarnetclient.fr</a>
+                <a data-umami-event="Visite projet" data-umami-event-site="moncarnetclient.fr" class="text-link" href="https://moncarnetclient.fr" target="_blank" rel="noopener noreferrer">moncarnetclient.fr</a>
               </div>
             </article>
 
@@ -210,8 +211,8 @@
             </article>
 
             <article class="project project--right" id="projet-vendevoo" data-project="Vendevoo" data-kind="SaaS immobilier" data-reveal>
-              <a class="project-media" href="https://vendevoo.com" target="_blank" rel="noopener noreferrer" aria-label="Voir le site Vendevoo">
-                <img src="assets/projets/vendevoo.webp" width="1200" height="750" loading="lazy" decoding="async" alt="Interface de la plateforme immobilière Vendevoo" />
+              <a data-umami-event="Visite projet" data-umami-event-site="vendevoo.com" class="project-media" href="https://vendevoo.com" target="_blank" rel="noopener noreferrer" aria-label="Voir le site Vendevoo">
+                <img src="assets/projets/vendevoo.webp" srcset="assets/projets/vendevoo-800.webp 800w, assets/projets/vendevoo.webp 1200w" sizes="(max-width: 800px) 100vw, 60vw" width="1200" height="750" loading="lazy" decoding="async" alt="Interface de la plateforme immobilière Vendevoo" />
               </a>
               <div class="project-copy">
                 <div>
@@ -226,20 +227,20 @@
                   <p><span>Rôle</span> Conception &amp; développement full stack</p>
                   <p><span>Stack</span> Next.js, Node.js, TypeScript, PostgreSQL</p>
                 </div>
-                <a class="text-link" href="https://vendevoo.com" target="_blank" rel="noopener noreferrer">vendevoo.com</a>
+                <a data-umami-event="Visite projet" data-umami-event-site="vendevoo.com" class="text-link" href="https://vendevoo.com" target="_blank" rel="noopener noreferrer">vendevoo.com</a>
               </div>
             </article>
 
             <article class="project project--left" id="projet-yael-fabrik" data-project="Yaël Fabrik" data-kind="Boutique en ligne" data-reveal>
-              <a class="project-media" href="https://yaelfabrik.fr" target="_blank" rel="noopener noreferrer" aria-label="Voir le site Yaël Fabrik">
-                <img src="assets/projets/yael-fabrik.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Page d’accueil de la boutique Yaël Fabrik : des créations à votre image" />
+              <a data-umami-event="Visite projet" data-umami-event-site="yaelfabrik.fr" class="project-media" href="https://yaelfabrik.fr" target="_blank" rel="noopener noreferrer" aria-label="Voir le site Yaël Fabrik">
+                <img src="assets/projets/yael-fabrik.webp" srcset="assets/projets/yael-fabrik-800.webp 800w, assets/projets/yael-fabrik.webp 1600w" sizes="(max-width: 800px) 100vw, 60vw" width="1600" height="1000" loading="lazy" decoding="async" alt="Page d’accueil de la boutique Yaël Fabrik : des créations à votre image" />
               </a>
               <div class="project-copy">
                 <div>
                   <p class="project-kicker">04 · Client · E-commerce</p>
                   <h3>Yaël Fabrik</h3>
                   <p class="project-description">
-                    La boutique d’une créatrice de bijoux, textiles et cadeaux personnalisés.
+                    La boutique d’un créateur de bijoux, textiles et cadeaux personnalisés.
                     Une extension sur mesure gère les options de personnalisation par produit,
                     les fichiers envoyés par les clients et les demandes de devis pros.
                   </p>
@@ -248,13 +249,13 @@
                   <p><span>Rôle</span> Boutique, extension sur mesure, hébergement</p>
                   <p><span>Stack</span> WordPress, WooCommerce, PHP, Stripe, Docker</p>
                 </div>
-                <a class="text-link" href="https://yaelfabrik.fr" target="_blank" rel="noopener noreferrer">yaelfabrik.fr</a>
+                <a data-umami-event="Visite projet" data-umami-event-site="yaelfabrik.fr" class="text-link" href="https://yaelfabrik.fr" target="_blank" rel="noopener noreferrer">yaelfabrik.fr</a>
               </div>
             </article>
 
             <article class="project project--right" id="projet-animarket" data-project="Animarket" data-kind="Animalerie à Vendôme" data-reveal>
-              <a class="project-media" href="https://animarket.fr" target="_blank" rel="noopener noreferrer" aria-label="Voir le site Animarket">
-                <img src="assets/projets/animarket.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Page d’accueil d’Animarket : animalerie et toilettage à Vendôme" />
+              <a data-umami-event="Visite projet" data-umami-event-site="animarket.fr" class="project-media" href="https://animarket.fr" target="_blank" rel="noopener noreferrer" aria-label="Voir le site Animarket">
+                <img src="assets/projets/animarket.webp" srcset="assets/projets/animarket-800.webp 800w, assets/projets/animarket.webp 1600w" sizes="(max-width: 800px) 100vw, 60vw" width="1600" height="1000" loading="lazy" decoding="async" alt="Page d’accueil d’Animarket : animalerie et toilettage à Vendôme" />
               </a>
               <div class="project-copy">
                 <div>
@@ -269,13 +270,13 @@
                   <p><span>Rôle</span> Design &amp; développement</p>
                   <p><span>Stack</span> Next.js, React, TypeScript, export statique</p>
                 </div>
-                <a class="text-link" href="https://animarket.fr" target="_blank" rel="noopener noreferrer">animarket.fr</a>
+                <a data-umami-event="Visite projet" data-umami-event-site="animarket.fr" class="text-link" href="https://animarket.fr" target="_blank" rel="noopener noreferrer">animarket.fr</a>
               </div>
             </article>
 
             <article class="project project--left" id="projet-la-cabane-a-mousse" data-project="La Cabane à Mousse" data-kind="Bar à Vendôme" data-reveal>
-              <a class="project-media" href="https://lacabaneamousse-vendome.com/" target="_blank" rel="noopener noreferrer" aria-label="Voir le site La Cabane à Mousse">
-                <img src="assets/projets/la-cabane-a-mousse.webp" width="1200" height="750" loading="lazy" decoding="async" alt="Page d’accueil du site La Cabane à Mousse" />
+              <a data-umami-event="Visite projet" data-umami-event-site="lacabaneamousse-vendome.com" class="project-media" href="https://lacabaneamousse-vendome.com/" target="_blank" rel="noopener noreferrer" aria-label="Voir le site La Cabane à Mousse">
+                <img src="assets/projets/la-cabane-a-mousse.webp" srcset="assets/projets/la-cabane-a-mousse-800.webp 800w, assets/projets/la-cabane-a-mousse.webp 1200w" sizes="(max-width: 800px) 100vw, 60vw" width="1200" height="750" loading="lazy" decoding="async" alt="Page d’accueil du site La Cabane à Mousse" />
               </a>
               <div class="project-copy">
                 <div>
@@ -290,13 +291,13 @@
                   <p><span>Rôle</span> Design &amp; développement</p>
                   <p><span>Stack</span> HTML, CSS, JavaScript</p>
                 </div>
-                <a class="text-link" href="https://lacabaneamousse-vendome.com/" target="_blank" rel="noopener noreferrer">lacabaneamousse-vendome.com</a>
+                <a data-umami-event="Visite projet" data-umami-event-site="lacabaneamousse-vendome.com" class="text-link" href="https://lacabaneamousse-vendome.com/" target="_blank" rel="noopener noreferrer">lacabaneamousse-vendome.com</a>
               </div>
             </article>
 
             <article class="project project--right" id="projet-deckburn" data-project="DeckBurn" data-kind="App iPhone" data-reveal>
-              <a class="project-media project-media--deckburn" href="https://deckburn.esref-aksu.com/" target="_blank" rel="noopener noreferrer" aria-label="Voir le site DeckBurn">
-                <img src="assets/projets/deckburn.jpg" width="1720" height="880" loading="lazy" decoding="async" alt="Page d’accueil de DeckBurn avec le slogan 52 cartes, zéro excuse et l’application sur iPhone" />
+              <a data-umami-event="Visite projet" data-umami-event-site="deckburn.esref-aksu.com" class="project-media project-media--deckburn" href="https://deckburn.esref-aksu.com/" target="_blank" rel="noopener noreferrer" aria-label="Voir le site DeckBurn">
+                <img src="assets/projets/deckburn.webp" srcset="assets/projets/deckburn-800.webp 800w, assets/projets/deckburn.webp 1720w" sizes="(max-width: 800px) 100vw, 60vw" width="1720" height="880" loading="lazy" decoding="async" alt="Page d’accueil de DeckBurn avec le slogan 52 cartes, zéro excuse et l’application sur iPhone" />
               </a>
               <div class="project-copy">
                 <div>
@@ -312,7 +313,7 @@
                   <p><span>Rôle</span> Idée, design, code</p>
                   <p><span>Stack</span> iOS, HTML, CSS, JavaScript</p>
                 </div>
-                <a class="text-link" href="https://deckburn.esref-aksu.com/" target="_blank" rel="noopener noreferrer">deckburn.esref-aksu.com</a>
+                <a data-umami-event="Visite projet" data-umami-event-site="deckburn.esref-aksu.com" class="text-link" href="https://deckburn.esref-aksu.com/" target="_blank" rel="noopener noreferrer">deckburn.esref-aksu.com</a>
               </div>
             </article>
           </div>
@@ -334,24 +335,32 @@
             <li data-reveal>
               <h3>Sites vitrines</h3>
               <p>Pour les commerces et les artisans qui veulent être trouvés et contactés.</p>
+              <p class="service-price"><strong>À partir de 700&nbsp;€&nbsp;HT</strong> · en ligne en 1 à 2 semaines</p>
               <small>Animarket · La Cabane à Mousse</small>
             </li>
             <li data-reveal>
               <h3>Boutiques en ligne</h3>
               <p>Catalogue, paiement, livraison, et du sur-mesure quand l’outil standard ne suffit pas.</p>
+              <p class="service-price"><strong>Sur devis</strong> · selon le catalogue et les options</p>
               <small>Yaël Fabrik · Boutik</small>
             </li>
             <li data-reveal>
               <h3>SaaS &amp; applications</h3>
               <p>Du premier écran à la mise en production, sur le web et sur mobile.</p>
+              <p class="service-price"><strong>Sur devis</strong> · découpé en étapes livrables</p>
               <small>Mon Carnet Client · Vendevoo · DeckBurn</small>
             </li>
             <li data-reveal>
               <h3>Connecteurs &amp; automatisation</h3>
               <p>Faire parler un ERP, une boutique et vos outils, sans ressaisie.</p>
+              <p class="service-price"><strong>Sur devis</strong> · au forfait ou en régie</p>
               <small>SAP Business One · Epicor · QuickBooks · EDI</small>
             </li>
           </ul>
+          <p class="service-note" data-reveal>
+            Après la mise en ligne&nbsp;: hébergement et maintenance (mises à jour, sécurité, sauvegardes)
+            à partir de <strong>30&nbsp;€&nbsp;HT par mois</strong>. TVA non applicable, art.&nbsp;293&nbsp;B du CGI.
+          </p>
         </div>
       </section>
 
@@ -373,28 +382,28 @@
 
           <ul class="contact-links" data-reveal>
               <li>
-                <a href="mailto:contact@esref-aksu.com">
+                <a href="mailto:contact@esref-aksu.com" data-umami-event="Contact email">
                   <span class="contact-links-label">Email</span>
                   <span class="contact-links-value">contact@esref-aksu.com</span>
                   <span class="contact-links-action" aria-hidden="true">Écrire</span>
                 </a>
               </li>
               <li>
-                <a href="tel:+33767674489">
+                <a href="tel:+33767674489" data-umami-event="Contact téléphone">
                   <span class="contact-links-label">Téléphone</span>
                   <span class="contact-links-value">07 67 67 44 89</span>
                   <span class="contact-links-action" aria-hidden="true">Appeler</span>
                 </a>
               </li>
               <li>
-                <a href="https://linkedin.com/in/esref-aksu" target="_blank" rel="noopener noreferrer">
+                <a href="https://linkedin.com/in/esref-aksu" target="_blank" rel="noopener noreferrer" data-umami-event="Contact LinkedIn">
                   <span class="contact-links-label">LinkedIn</span>
                   <span class="contact-links-value">in/esref-aksu</span>
                   <span class="contact-links-action" aria-hidden="true">Ouvrir</span>
                 </a>
               </li>
               <li>
-                <a href="https://github.com/Blovario" target="_blank" rel="noopener noreferrer">
+                <a href="https://github.com/Blovario" target="_blank" rel="noopener noreferrer" data-umami-event="Contact GitHub">
                   <span class="contact-links-label">GitHub</span>
                   <span class="contact-links-value">Blovario</span>
                   <span class="contact-links-action" aria-hidden="true">Ouvrir</span>
@@ -427,6 +436,17 @@
     </footer>
     <script src="script.js"></script>
     <script type="module" src="hero.js"></script>
-    <script type="module" src="progi3d.js"></script>
+    <script type="module">
+      // la maquette Progi-Média ne se charge qu'à l'approche de sa section
+      const host = document.querySelector("[data-progi-scene]");
+      if (host) {
+        const io = new IntersectionObserver(([e]) => {
+          if (!e.isIntersecting) return;
+          io.disconnect();
+          import("./progi3d.js");
+        }, { rootMargin: "800px 0px" });
+        io.observe(host);
+      }
+    </script>
   </body>
 </html>

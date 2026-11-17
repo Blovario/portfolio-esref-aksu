@@ -785,6 +785,29 @@ html:not(.has-scene) .hero-hint {
   line-height: 1.6;
 }
 
+.service-grid .service-price {
+  flex: none;
+  margin-top: 1.25rem;
+  color: #3f443f;
+  font-size: 0.92rem;
+}
+
+.service-grid .service-price strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.service-note {
+  max-width: 52rem;
+  margin-top: 2rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.service-note strong {
+  color: var(--ink);
+}
+
 .service-grid small {
   margin-top: 1.75rem;
   padding-top: 1rem;
@@ -1103,15 +1126,6 @@ html:not(.has-scene) .hero-hint {
   background: var(--paper);
 }
 
-.legal-header-link {
-  color: #c7cec7;
-  font-size: 0.8rem;
-}
-
-.legal-header-link:hover {
-  color: var(--green);
-}
-
 .legal-main {
   padding-top: 4.75rem;
 }
@@ -1126,12 +1140,14 @@ html:not(.has-scene) .hero-hint {
 }
 
 .legal-title {
-  max-width: 13ch;
-  margin-top: 2rem;
-  font-size: clamp(3rem, 6vw, 6rem);
-  font-weight: 600;
-  letter-spacing: -0.065em;
-  line-height: 0.98;
+  max-width: 24ch;
+  margin-top: 1.5rem;
+  font-family: var(--display);
+  font-stretch: 72%;
+  font-size: clamp(3rem, 7vw, 6.5rem);
+  font-weight: 800;
+  line-height: 0.9;
+  text-transform: uppercase;
 }
 
 .legal-intro {
@@ -1158,9 +1174,11 @@ html:not(.has-scene) .hero-hint {
 
 .legal-card h2 {
   margin-bottom: 1.5rem;
-  font-size: 1.45rem;
-  font-weight: 600;
-  letter-spacing: -0.04em;
+  font-family: var(--display);
+  font-stretch: 72%;
+  font-size: 1.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .legal-card h3 {

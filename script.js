@@ -171,6 +171,7 @@ document.documentElement.classList.add("js");
       }
 
       form.reset();
+      window.umami?.track("Formulaire envoyé");
       showFormResult("Message envoyé. Merci — je vous répondrai rapidement.", "success");
     } catch (error) {
       showFormResult(
