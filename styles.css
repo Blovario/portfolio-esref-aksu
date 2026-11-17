@@ -182,12 +182,24 @@ ol {
 }
 
 .nav-contact {
-  gap: 0.6rem;
   color: var(--white);
 }
 
-.nav-contact span {
-  color: var(--green);
+@media (min-width: 801px) {
+  .nav-contact {
+    min-height: 2.5rem;
+    padding: 0 1.1rem;
+    border: 1px solid var(--green);
+    border-radius: 999px;
+    transition: background-color 180ms ease, color 180ms ease;
+  }
+
+  .nav-contact:hover,
+  .nav-contact.is-active {
+    border-color: var(--green);
+    background: var(--green);
+    color: #182012;
+  }
 }
 
 .menu-toggle {
@@ -420,7 +432,6 @@ html:not(.has-scene) .hero-hint {
 }
 
 .text-link:hover {
-  gap: 1.7rem;
   color: var(--green-dark);
 }
 
@@ -504,23 +515,24 @@ html:not(.has-scene) .hero-hint {
 }
 
 .project-media::after {
-  content: "↗";
+  content: "Voir le site";
   position: absolute;
-  right: 0;
-  bottom: 0;
-  display: grid;
-  place-items: center;
-  width: 3.75rem;
-  height: 3.75rem;
+  right: 1rem;
+  bottom: 1rem;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
   background: var(--ink);
-  color: var(--green);
-  font-size: 1.1rem;
-  transform: translateY(100%);
-  transition: transform 220ms ease;
+  color: var(--white);
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(0.5rem);
+  transition: opacity 200ms ease, transform 220ms ease;
 }
 
 .project-media:hover::after,
 .project-media:focus-visible::after {
+  opacity: 1;
   transform: none;
 }
 
@@ -554,7 +566,8 @@ html:not(.has-scene) .hero-hint {
   color: var(--muted);
 }
 
-.project h3 {
+.project h3,
+.progi-head h3 {
   margin-top: 0.7rem;
   font-family: var(--display);
   font-stretch: 72%;
@@ -598,106 +611,80 @@ html:not(.has-scene) .hero-hint {
   margin-top: 1.5rem;
 }
 
-/* Progi-Média */
+/* Progi-Média : 7e projet, même langage visuel que les autres */
 .progi {
-  background: #1e221f;
+  padding-block: clamp(5rem, 9vw, 8rem) 0;
 }
 
 .progi-head {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: clamp(2rem, 6vw, 6rem);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 6vw, 7rem);
   align-items: end;
-}
-
-.progi-kicker {
-  color: var(--green);
-  font-family: var(--mono);
-  font-size: 0.75rem;
-}
-
-.progi h2 {
-  margin-top: 1rem;
-  font-family: var(--display);
-  font-stretch: 72%;
-  font-size: clamp(3rem, 7vw, 6.5rem);
-  font-weight: 800;
-  line-height: 0.88;
-  text-transform: uppercase;
 }
 
 .progi-lead {
   max-width: 36rem;
-  color: #c4cbc4;
-  font-size: clamp(1rem, 1.3vw, 1.15rem);
-  line-height: 1.7;
+  color: #484d48;
+  font-size: 0.96rem;
 }
 
 .progi-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: clamp(3rem, 6vw, 5rem);
-  border-block: 1px solid var(--line-dark);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2.5rem;
+  margin-top: 2rem;
+  padding-block: 1.1rem;
+  border-block: 1px solid var(--line);
 }
 
 .progi-stats div {
-  padding: 1.4rem 0;
-}
-
-.progi-stats div + div {
-  padding-left: clamp(1rem, 3vw, 2.5rem);
-  border-left: 1px solid var(--line-dark);
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
 }
 
 .progi-stats dt {
-  color: var(--muted-dark);
+  color: var(--muted);
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .progi-stats dd {
-  margin-top: 0.3rem;
-  color: var(--white);
-  font-family: var(--display);
-  font-stretch: 72%;
-  font-size: clamp(1.6rem, 3.4vw, 3rem);
-  font-weight: 800;
-  line-height: 1;
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .progi-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
-  margin-top: clamp(3rem, 6vw, 5rem);
-  background: var(--line-dark);
-  border: 1px solid var(--line-dark);
+  margin-top: 2.5rem;
+  background: var(--line);
+  border: 1px solid var(--line);
 }
 
 .progi-grid li {
   display: flex;
   flex-direction: column;
-  padding: clamp(1.5rem, 2.5vw, 2.25rem);
-  background: #1e221f;
-  transition: background-color 200ms ease;
-}
-
-.progi-grid li:hover {
-  background: #232823;
+  padding: clamp(1.4rem, 2.2vw, 2rem);
+  background: var(--paper);
 }
 
 .progi-n {
-  color: var(--green);
+  color: var(--green-dark);
   font-family: var(--mono);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
 }
 
 .progi-grid h3 {
-  margin-top: 1.25rem;
-  color: var(--white);
+  margin-top: 1rem;
   font-family: var(--display);
   font-stretch: 72%;
-  font-size: clamp(1.45rem, 2vw, 1.85rem);
+  font-size: clamp(1.3rem, 1.7vw, 1.55rem);
   font-weight: 800;
   line-height: 1.05;
   text-transform: uppercase;
@@ -705,17 +692,17 @@ html:not(.has-scene) .hero-hint {
 
 .progi-grid p {
   flex: 1;
-  margin-top: 0.9rem;
-  color: #b8c0b8;
-  font-size: 0.95rem;
-  line-height: 1.65;
+  margin-top: 0.75rem;
+  color: #4d524d;
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
 
 .progi-grid small {
-  margin-top: 1.5rem;
-  color: var(--muted-dark);
+  margin-top: 1.25rem;
+  color: var(--muted);
   font-family: var(--mono);
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   line-height: 1.6;
 }
 
@@ -723,16 +710,16 @@ html:not(.has-scene) .hero-hint {
   display: flex;
   gap: 1.5rem;
   max-width: 52rem;
-  margin-top: clamp(2.5rem, 5vw, 4rem);
-  color: #9aa39a;
-  font-size: 0.92rem;
+  margin-top: 2.5rem;
+  color: var(--muted);
+  font-size: 0.88rem;
 }
 
 .progi-before span {
   flex: none;
-  color: var(--green);
+  color: var(--green-dark);
   font-family: var(--mono);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   line-height: 1.9;
 }
 
@@ -892,18 +879,26 @@ html:not(.has-scene) .hero-hint {
   font-weight: 500;
 }
 
-.contact-links-arrow {
-  color: var(--green);
-  transition: transform 200ms ease;
+.contact-links-action {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #3f4740;
+  border-radius: 999px;
+  color: #d6dcd6;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
 }
 
-.contact-links a:hover {
-  padding-left: 0.5rem;
+.contact-links a:hover,
+.contact-links a:focus-visible {
   color: var(--green);
 }
 
-.contact-links a:hover .contact-links-arrow {
-  transform: translate(0.2rem, -0.2rem);
+.contact-links a:hover .contact-links-action,
+.contact-links a:focus-visible .contact-links-action {
+  border-color: var(--green);
+  background: var(--green);
+  color: #182012;
 }
 
 .contact-form {
@@ -1015,7 +1010,7 @@ html:not(.has-scene) .hero-hint {
 .submit-button {
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 2rem;
   width: 100%;
   min-height: 3.5rem;
@@ -1389,16 +1384,6 @@ html:not(.has-scene) .hero-hint {
     grid-column: 1;
   }
 
-  .progi-stats {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .progi-stats div:last-child {
-    grid-column: 1 / -1;
-    padding-left: 0;
-    border-left: 0;
-    border-top: 1px solid var(--line-dark);
-  }
 
   .progi-before {
     flex-direction: column;
@@ -1406,7 +1391,18 @@ html:not(.has-scene) .hero-hint {
   }
 
   .contact-links a {
-    grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "label action" "value action";
+    gap: 0.15rem 0.75rem;
+  }
+
+  .contact-links-label { grid-area: label; }
+  .contact-links-value { grid-area: value; }
+  .contact-links-action { grid-area: action; }
+
+  .contact-links-action {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.72rem;
   }
 
   .contact h2 {
