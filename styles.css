@@ -1641,10 +1641,9 @@ mini…) : tout le hero tient dans l'écran */
 /* Calque du passage de relais hero → premier projet */
 .flight-layer {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   z-index: 90;
-  width: 100vw;
-  height: 100vh;
   pointer-events: none;
   visibility: hidden;
 }

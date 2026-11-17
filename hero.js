@@ -11,8 +11,8 @@ const hero = document.querySelector(".hero");
 const label = document.querySelector("#hero-current");
 const inner = document.querySelector(".hero-inner");
 
-const small = window.innerWidth < 800;
-const PIXEL_RATIO = Math.min(window.devicePixelRatio, small ? 1.5 : 2);
+// Rendu net sur les écrans haute densité (iPhone : 3), plafonné à 2 pour rester fluide
+const PIXEL_RATIO = Math.min(window.devicePixelRatio || 1, 2);
 
 const projects = [...document.querySelectorAll("[data-project]")].map((el) => ({
   id: el.id,
@@ -498,8 +498,15 @@ function init() {
     const panel0 = panels[0];
     let lastT = -1;
 
+    // Taille en pixels réels de la fenêtre visible. Sur iPhone, 100vh ne correspond pas à la
+    // zone visible (barre d'adresse) : le calque serait étiré, d'où l'image « zoomée ».
+    let layerW = 0;
+    let layerH = 0;
     function sizeLayer() {
-      r2.setSize(window.innerWidth, window.innerHeight, false);
+      if (layerW === window.innerWidth && layerH === window.innerHeight) return;
+      layerW = window.innerWidth;
+      layerH = window.innerHeight;
+      r2.setSize(layerW, layerH, true);
     }
     sizeLayer();
     window.addEventListener("resize", sizeLayer);
@@ -527,6 +534,7 @@ function init() {
     const smooth = (t) => t * t * (3 - 2 * t);
 
     function update() {
+      sizeLayer(); // la barre d'adresse d'iOS change la hauteur visible pendant le scroll
       const vh = window.innerHeight;
       const box = img.parentElement.getBoundingClientRect();
       // fin du trajet : la capture est centrée dans l'écran (ou au plus haut possible)
