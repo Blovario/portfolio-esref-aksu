@@ -1299,7 +1299,7 @@ html:not(.has-scene) .hero-hint {
 
   .project-media {
     min-height: 0;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 10;
   }
 
   .contact-layout,
@@ -1520,4 +1520,15 @@ mini…) : tout le hero tient dans l'écran */
     opacity: 1;
     transform: none;
   }
+}
+
+/* Calque du passage de relais hero → premier projet */
+.flight-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  visibility: hidden;
 }

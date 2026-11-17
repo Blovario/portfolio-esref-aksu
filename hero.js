@@ -106,7 +106,7 @@ function init() {
 
     holder.add(front, back, edge);
     ring.add(holder);
-    panels.push({ front, edge, mat });
+    panels.push({ holder, front, edge, mat });
 
     if (p.image) {
       loader.load(p.image, (tex) => {
@@ -299,6 +299,9 @@ function init() {
     lastInteraction = performance.now();
   });
 
+  // --- Passage de relais : l'écran 01 quitte l'anneau et se pose sur sa capture ---
+  const flight = createFlight();
+
   // --- Boucle ---
   const clock = new THREE.Clock();
 
@@ -307,6 +310,12 @@ function init() {
     const dt = Math.min(clock.getDelta(), 0.05);
     const t = clock.elapsedTime;
     const now = performance.now();
+
+    // dès qu'on scrolle, l'anneau ramène l'écran 01 devant lui pour le passage de relais
+    if (flight && window.scrollY > 4 && !dragging) {
+      target = Math.round(angle / (Math.PI * 2)) * Math.PI * 2;
+      lastInteraction = now;
+    }
 
     // défilement automatique, un écran toutes les 4 s, après 5 s sans interaction
     if (!reduceMotion && !dragging && now - lastInteraction > 5000) {
@@ -334,6 +343,7 @@ function init() {
     });
 
     renderer.render(scene, camera);
+    flight?.update();
     requestAnimationFrame(frame);
   }
 
@@ -346,6 +356,206 @@ function init() {
 
   function stop() {
     running = false;
+  }
+
+  function createFlight() {
+    if (reduceMotion) return null;
+    const article = document.getElementById(projects[0].id);
+    const img = article?.querySelector(".project-media img");
+    if (!img) return null;
+
+    // Calque WebGL fixe par-dessus la page, transparent et non cliquable
+    const layer = document.createElement("canvas");
+    layer.className = "flight-layer";
+    layer.setAttribute("aria-hidden", "true");
+    document.body.appendChild(layer);
+    const r2 = new THREE.WebGLRenderer({ canvas: layer, antialias: true, alpha: true });
+    r2.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    r2.setClearColor(0x000000, 0);
+    r2.outputColorSpace = THREE.SRGBColorSpace;
+
+    const fscene = new THREE.Scene();
+    const fcam = new THREE.Camera(); // positions données directement en coordonnées écran
+
+    // Un quadrilatère libre, texturé avec une interpolation projective
+    // (les 4 coins viennent de l'écran 3D au départ, du rectangle de l'image à l'arrivée)
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(12), 3));
+    g.setAttribute("uvq", new THREE.BufferAttribute(new Float32Array(12), 3));
+    g.setIndex([0, 1, 2, 0, 2, 3]);
+    const tex = new THREE.TextureLoader().load(img.getAttribute("src"));
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = r2.capabilities.getMaxAnisotropy();
+    const mat = new THREE.ShaderMaterial({
+      transparent: true,
+      depthTest: false,
+      side: THREE.DoubleSide,
+      uniforms: {
+        map: { value: tex },
+        uvMin: { value: new THREE.Vector2(0, 0) },
+        uvMax: { value: new THREE.Vector2(1, 1) },
+        radius: { value: 0.03 },
+        aspect: { value: 1.6 },
+        alpha: { value: 1 },
+      },
+      vertexShader: `
+        attribute vec3 uvq;
+        varying vec3 vUvq;
+        void main() {
+          vUvq = uvq;
+          gl_Position = vec4(position.xy, 0.0, 1.0);
+        }`,
+      fragmentShader: `
+        uniform sampler2D map;
+        uniform vec2 uvMin, uvMax;
+        uniform float radius, aspect, alpha;
+        varying vec3 vUvq;
+        void main() {
+          vec2 uv = vUvq.xy / vUvq.z;
+          // coins arrondis qui s'effacent à l'arrivée
+          vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
+          vec2 b = vec2(aspect, 1.0) * 0.5 - radius;
+          float d = length(max(abs(p) - b, 0.0)) - radius;
+          if (d > 0.0) discard;
+          vec4 c = texture2D(map, mix(uvMin, uvMax, uv));
+          gl_FragColor = vec4(c.rgb, c.a * alpha);
+          #include <colorspace_fragment>
+        }`,
+    });
+    const quad = new THREE.Mesh(g, mat);
+    quad.frustumCulled = false;
+    fscene.add(quad);
+
+    const corners = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+    const local = [
+      [-W / 2, H / 2],
+      [W / 2, H / 2],
+      [W / 2, -H / 2],
+      [-W / 2, -H / 2],
+    ];
+    const src = local.map(() => [0, 0]);
+    const panel0 = panels[0];
+    let lastT = -1;
+
+    function sizeLayer() {
+      r2.setSize(window.innerWidth, window.innerHeight, false);
+    }
+    sizeLayer();
+    window.addEventListener("resize", sizeLayer);
+
+    // Coins de l'écran 01 dans l'anneau, en pixels de la fenêtre
+    function sourceCorners() {
+      const rect = canvas.getBoundingClientRect();
+      panel0.holder.updateWorldMatrix(true, false);
+      local.forEach(([x, y], i) => {
+        corners[i].set(x, y, 0).applyMatrix4(panel0.holder.matrixWorld).project(camera);
+        src[i][0] = rect.left + ((corners[i].x + 1) / 2) * rect.width;
+        src[i][1] = rect.top + ((1 - corners[i].y) / 2) * rect.height;
+      });
+    }
+
+    // Partie visible de l'image dans son cadre (object-fit: cover, calé en haut)
+    function targetCrop(box) {
+      const ia = (img.naturalWidth || 1600) / (img.naturalHeight || 1000);
+      const ba = box.width / box.height;
+      if (ba > ia) return { min: [0, 1 - ia / ba], max: [1, 1] };
+      const k = ba / ia;
+      return { min: [(1 - k) / 2, 0], max: [(1 + k) / 2, 1] };
+    }
+
+    const smooth = (t) => t * t * (3 - 2 * t);
+
+    function update() {
+      const vh = window.innerHeight;
+      const box = img.parentElement.getBoundingClientRect();
+      // fin du trajet : la capture est centrée dans l'écran (ou au plus haut possible)
+      const endScroll = Math.max(box.top + window.scrollY - Math.max((vh - box.height) / 2, 80), vh * 0.35);
+      const startScroll = vh * 0.04;
+      const raw = (window.scrollY - startScroll) / (endScroll - startScroll);
+      const t = Math.min(Math.max(raw, 0), 1);
+
+      const flying = t > 0 && t < 1;
+      panel0.holder.visible = t === 0;
+      img.style.visibility = t >= 1 || t === 0 ? "" : "hidden";
+      layer.style.visibility = flying ? "visible" : "hidden";
+      if (!flying) {
+        if (lastT !== t) r2.clear();
+        lastT = t;
+        return;
+      }
+      lastT = t;
+
+      sourceCorners();
+      const dst = [
+        [box.left, box.top],
+        [box.right, box.top],
+        [box.right, box.bottom],
+        [box.left, box.bottom],
+      ];
+      const e = smooth(t);
+      // petit arc : l'écran se soulève vers nous à mi-chemin
+      const lift = Math.sin(Math.PI * e) * 0.06;
+      const cx = (box.left + box.right) / 2;
+      const cy = (box.top + box.bottom) / 2;
+      const pts = src.map(([sx, sy], i) => {
+        let x = sx + (dst[i][0] - sx) * e;
+        let y = sy + (dst[i][1] - sy) * e;
+        const mx = (src.reduce((a, p) => a + p[0], 0) / 4) * (1 - e) + cx * e;
+        const my = (src.reduce((a, p) => a + p[1], 0) / 4) * (1 - e) + cy * e;
+        x = mx + (x - mx) * (1 + lift);
+        y = my + (y - my) * (1 + lift);
+        return [x, y];
+      });
+
+      // interpolation projective : q dépend de l'intersection des diagonales
+      const [p0, p1, p2, p3] = pts;
+      const d1x = p2[0] - p0[0], d1y = p2[1] - p0[1];
+      const d2x = p3[0] - p1[0], d2y = p3[1] - p1[1];
+      const den = d1x * d2y - d1y * d2x || 1e-6;
+      const s = ((p1[0] - p0[0]) * d2y - (p1[1] - p0[1]) * d2x) / den;
+      const c = [p0[0] + s * d1x, p0[1] + s * d1y];
+      const dist = pts.map((p) => Math.hypot(p[0] - c[0], p[1] - c[1]));
+      const uvs = [
+        [0, 1],
+        [1, 1],
+        [1, 0],
+        [0, 0],
+      ];
+      const pos = g.attributes.position.array;
+      const uvq = g.attributes.uvq.array;
+      pts.forEach((p, i) => {
+        const q = (dist[i] + dist[(i + 2) % 4]) / Math.max(dist[(i + 2) % 4], 1e-6);
+        pos[i * 3] = (p[0] / window.innerWidth) * 2 - 1;
+        pos[i * 3 + 1] = 1 - (p[1] / vh) * 2;
+        uvq[i * 3] = uvs[i][0] * q;
+        uvq[i * 3 + 1] = uvs[i][1] * q;
+        uvq[i * 3 + 2] = q;
+      });
+      g.attributes.position.needsUpdate = true;
+      g.attributes.uvq.needsUpdate = true;
+
+      const crop = targetCrop(box);
+      mat.uniforms.uvMin.value.set(crop.min[0] * e, crop.min[1] * e);
+      mat.uniforms.uvMax.value.set(1 + (crop.max[0] - 1) * e, 1 + (crop.max[1] - 1) * e);
+      mat.uniforms.aspect.value = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) / Math.max(Math.hypot(p3[0] - p0[0], p3[1] - p0[1]), 1);
+      mat.uniforms.radius.value = 0.045 * (1 - e);
+
+      r2.render(fscene, fcam);
+    }
+
+    // hors du hero, la boucle 3D est en pause : on suit le scroll directement
+    let queued = false;
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        if (!running) update();
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return { update };
   }
 
   resize();
