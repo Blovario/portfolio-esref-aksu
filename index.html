@@ -96,15 +96,16 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <!-- Three.js 0.170.0, hébergé avec le site (vendor/) : pas de connexion à un serveur externe -->
+    <script type="importmap">
+      { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+    </script>
     <link rel="modulepreload" href="hero-geometry.js" />
     <link rel="modulepreload" href="hero-poster.js" />
     <!-- la 3D : téléchargée dès le début, en priorité, au lieu d'attendre que hero.js la demande -->
     <link rel="modulepreload" href="hero.js" />
-    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js" crossorigin fetchpriority="high" />
+    <link rel="modulepreload" href="vendor/three.module.min.js" fetchpriority="high" />
     <script defer src="https://cloud.umami.is/script.js" data-website-id="cc9a91f1-5fa1-43cc-85fe-d30d33c464ad"></script>
-    <script type="importmap">
-      { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
-    </script>
   </head>
   <body class="portfolio-page">
     <a class="skip-link" href="#main-content">Aller au contenu</a>

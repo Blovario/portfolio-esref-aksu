@@ -606,9 +606,12 @@ function init() {
       driven.key = key;
       place(g);
 
-      const kCard = [];
-      const kRadius = [];
-      const kPic = [];
+      // sans image-clé tout en haut de la page, le navigateur interpolerait depuis l'état « au repos »
+      // de la carte (opaque, posée sur la capture) : elle surgissait d'en bas avant de remonter
+      const s0 = stateAt(0, g);
+      const kCard = [{ offset: 0, transform: s0.transform, opacity: 0 }];
+      const kRadius = [{ offset: 0, borderRadius: s0.borderRadius }];
+      const kPic = [{ offset: 0, transform: s0.pic }];
       const off = (s) => Math.min(Math.max(s / max, 0), 1);
       let origin = "50% 50%";
       for (let i = 0; i <= STEPS; i++) {
