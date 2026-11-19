@@ -122,7 +122,7 @@ function init() {
     holder.add(front, back, edge);
     ring.add(holder);
 
-    panels.push({ holder, front, edge, mat });
+    panels.push({ holder, front, edge, mat, loaded: !p.image });
 
     if (p.image) {
       loader.load(p.image, (tex) => {
@@ -138,11 +138,16 @@ function init() {
           tex.repeat.set(1, imgAspect / panelAspect);
           tex.offset.set(0, 1 - tex.repeat.y);
         }
+        renderer.initTexture(tex); // envoi à la carte graphique tout de suite, pas en pleine animation
         mat.map = tex;
-        mat.color.set(0xffffff);
+        mat.color.set(0x2a2f2a); // la capture apparaît en fondu depuis le gris de l'écran vide
         mat.needsUpdate = true;
+        panels[i].loaded = true;
         texturesLeft -= 1;
-      }, undefined, () => (texturesLeft -= 1));
+      }, undefined, () => {
+        panels[i].loaded = true;
+        texturesLeft -= 1;
+      });
     }
   });
 
@@ -348,6 +353,11 @@ function init() {
 
   // --- Boucle ---
   const clock = new THREE.Clock();
+  const WHITE = new THREE.Color(0xffffff);
+  const startedAt = performance.now();
+  const LOAD_WAIT = 400; // ms d'attente max des captures du fond, une fois celles de devant chargées
+  // les écrans visibles de face pendant l'arrivée (l'anneau fait un quart de tour en jaillissant)
+  const frontLoaded = () => [0, 1, 2, N - 1].every((i) => !panels[i % N] || panels[i % N].loaded);
 
   function frame() {
     if (!running) return;
@@ -393,6 +403,7 @@ function init() {
     const fi = frontIndex();
     setActive(fi);
     panels.forEach((p, i) => {
+      if (p.mat.map) p.mat.color.lerp(WHITE, ready ? 1 - Math.exp(-dt * 5) : 1);
       const o = i === fi ? 0.9 : 0;
       p.edge.material.opacity += (o - p.edge.material.opacity) * (1 - Math.exp(-dt * 6));
     });
@@ -406,7 +417,8 @@ function init() {
       readyAt = t;
       lastInteraction = now;
       document.documentElement.classList.add("has-ring");
-    } else if (!ready && texturesLeft <= 0) {
+    } else if (!ready && (texturesLeft <= 0 || (now - startedAt > LOAD_WAIT && frontLoaded()))) {
+      // on n'attend pas les captures du fond de l'anneau (dans le brouillard) : elles arriveront en fondu
       warming = true;
     }
     requestAnimationFrame(frame);
