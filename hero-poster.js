@@ -117,7 +117,7 @@ function layout() {
   for (const [x, z] of floorPoints()) {
     const pt = project(rig([x, FLOOR.y, z], view.layout));
     if (pt.depth <= 0.1 || pt.x < -4 || pt.y < -4 || pt.x > w + 4 || pt.y > h + 4) continue;
-    const edge = 1 - smoothstep(FLOOR.fadeFrom, FLOOR.fadeTo, Math.hypot(x, z));
+    const edge = 1 - smoothstep(view.floor.fadeFrom, view.floor.fadeTo, Math.hypot(x, z));
     if (edge <= 0) continue;
     const k = fogAt(pt.depth);
     const c = base.map((v, j) => Math.round(v + (ink[j] - v) * k));

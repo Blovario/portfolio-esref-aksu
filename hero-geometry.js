@@ -15,10 +15,10 @@ export const RIG_TILT = { x: 0.1, z: -0.045 };
 export const FLOOR = {
   y: -H / 2 - 0.5,
   from: 0.6, // premier cercle (unités)
-  to: 8, // dernier cercle
+  to: 16, // dernier cercle (seule la partie non estompée est visible, voir floorFade)
   size: 0.062,
   color: "#68726a",
-  fadeFrom: 4.2, // les points s'estompent entre ces deux rayons
+  fadeFrom: 4.2, // les points s'estompent entre ces deux rayons (mise en page côte à côte)
   fadeTo: 7.6,
 };
 
@@ -84,6 +84,27 @@ function fitBeside({ w, h, textRight, R, n }) {
 }
 
 /**
+ * Mise en page empilée (téléphone) : vu de face, le sol ne fait qu'une fine bande sous l'anneau.
+ * On l'étend vers la caméra jusqu'en bas du hero : les points passent derrière le texte.
+ */
+function stackedFloor({ h, eye, dist, layoutY, R }) {
+  const f = h / (2 * TAN); // pixels par unité à une profondeur de 1
+  const cos = Math.cos(RIG_TILT.x);
+  const sin = Math.sin(RIG_TILT.x);
+  // ordonnée à l'écran du point du sol le plus proche de la caméra sur le cercle de rayon r
+  const screenY = (r) => {
+    const y = FLOOR.y * cos - r * sin + layoutY;
+    const z = FLOOR.y * sin + r * cos;
+    return h / 2 - ((y - eye) * f) / (dist - z);
+  };
+  const maxR = Math.min(FLOOR.to, dist - 3); // pas de points énormes collés à la caméra
+  let r = R;
+  while (r < maxR && screenY(r) < h * 1.04) r += 0.1;
+  const fadeTo = Math.max(r, FLOOR.fadeTo);
+  return { fadeFrom: R + (fadeTo - R) * 0.55, fadeTo };
+}
+
+/**
  * Caméra et position de l'anneau pour une taille de hero donnée.
  * @param {{ w: number, h: number, padTop: number, innerTop: number, textRight: number, stacked: boolean, n: number }} p
  */
@@ -94,6 +115,7 @@ export function heroView({ w, h, padTop, innerTop, textRight, stacked, n }) {
   let cam;
   let target;
   let layout;
+  let floor = { fadeFrom: FLOOR.fadeFrom, fadeTo: FLOOR.fadeTo };
 
   if (stacked) {
     // L'anneau tient dans l'espace libre entre le menu et le texte.
@@ -107,6 +129,7 @@ export function heroView({ w, h, padTop, innerTop, textRight, stacked, n }) {
     target = [0, eye, 0];
     const centerPx = padTop + free / 2;
     layout = { x: 0, y: eye + (h / 2 - centerPx) / ppu + R * Math.sin(RIG_TILT.x) };
+    floor = stackedFloor({ h, eye, dist, layoutY: layout.y, R });
   } else {
     const fit = fitBeside({ w, h, textRight, R, n });
     dist = fit.dist;
@@ -122,6 +145,7 @@ export function heroView({ w, h, padTop, innerTop, textRight, stacked, n }) {
     cam,
     target,
     layout,
+    floor,
     fog: { near: dist - R + 0.3, far: dist + R * 0.9 },
   };
 }

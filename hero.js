@@ -218,6 +218,7 @@ function init() {
   let active = -1;
   let running = false;
   let layout = { x: 0, y: 0 };
+  let revealTo = FLOOR.fadeTo + 3; // rayon atteint par la vague d'allumage
 
   const ndc = new THREE.Vector2();
   const ray = new THREE.Raycaster();
@@ -252,6 +253,9 @@ function init() {
     layout = view.layout;
     floorMat.uniforms.uFogNear.value = view.fog.near;
     floorMat.uniforms.uFogFar.value = view.fog.far;
+    floorMat.uniforms.uFadeFrom.value = view.floor.fadeFrom;
+    floorMat.uniforms.uFadeTo.value = view.floor.fadeTo;
+    revealTo = view.floor.fadeTo + 3;
     floorMat.uniforms.uScale.value = hero.clientHeight * 0.5 * renderer.getPixelRatio();
     // l'écran de face reste net, l'arrière de l'anneau se fond dans le fond
     scene.fog.near = view.fog.near;
@@ -371,7 +375,7 @@ function init() {
     ring.visible = ready || warming;
     ring.rotation.y = angle - STEP * 1.5 * (1 - easeOut(k));
     // les points s'allument en vague depuis le centre de l'anneau, puis scintillent de temps en temps
-    floorMat.uniforms.uReveal.value = reduceMotion ? 99 : easeOut((k - 0.15) / 1.6) * (FLOOR.to + 3);
+    floorMat.uniforms.uReveal.value = reduceMotion ? 99 : easeOut((k - 0.15) / 1.6) * revealTo;
     floorMat.uniforms.uTime.value = t;
     floorMat.uniforms.uBlink.value = reduceMotion ? 0 : clamp01(k - 1.6);
 
@@ -426,9 +430,8 @@ function init() {
     if (!img) return null;
     const slot = img.parentElement;
 
-    // Une carte HTML posée DANS la page, à l'emplacement de la capture : le navigateur la fait
-    // défiler lui-même, parfaitement en phase avec la page (pas de saccades sur iPhone).
-    // Le script ne calcule que sa déformation (CSS 3D) entre l'anneau et sa place finale.
+    // Une carte HTML posée DANS la page, à l'emplacement de la capture, déformée en CSS 3D
+    // entre l'écran 01 de l'anneau et sa place finale.
     const card = document.createElement("div");
     card.className = "flight-card";
     card.setAttribute("aria-hidden", "true");
@@ -448,8 +451,19 @@ function init() {
     ];
     const src = local.map(() => [0, 0]);
     const panel0 = panels[0];
-    const R_X = ((RADIUS_CORNER / W) * 100).toFixed(3);
-    const R_Y = ((RADIUS_CORNER / H) * 100).toFixed(3);
+    const R_X = (RADIUS_CORNER / W) * 100;
+    const R_Y = (RADIUS_CORNER / H) * 100;
+
+    // Hauteur d'écran stable : sur iPhone, innerHeight change quand la barre de Safari se replie
+    // pendant le défilement, ce qui faisait sauter la fin du trajet. On ne la relit qu'en cas de
+    // vrai redimensionnement (rotation, fenêtre).
+    let vw = window.innerWidth;
+    let vh = window.innerHeight;
+    window.addEventListener("resize", () => {
+      if (window.innerWidth === vw && Math.abs(window.innerHeight - vh) < 160) return;
+      vw = window.innerWidth;
+      vh = window.innerHeight;
+    });
 
     // Coins de l'écran 01 dans l'anneau, en coordonnées de la PAGE (pas de la fenêtre)
     function sourceCorners() {
@@ -460,6 +474,13 @@ function init() {
         src[i][0] = rect.left + window.scrollX + ((corners[i].x + 1) / 2) * rect.width;
         src[i][1] = rect.top + window.scrollY + ((1 - corners[i].y) / 2) * rect.height;
       });
+      // vu de dos (au fond de l'anneau), l'écran apparaîtrait en miroir : on remet l'image à l'endroit
+      const area =
+        (src[1][0] - src[0][0]) * (src[3][1] - src[0][1]) - (src[1][1] - src[0][1]) * (src[3][0] - src[0][0]);
+      if (area < 0) {
+        [src[0], src[1]] = [src[1], src[0]];
+        [src[2], src[3]] = [src[3], src[2]];
+      }
     }
 
     // Transformation projective : rectangle de la carte → quadrilatère
@@ -477,41 +498,21 @@ function init() {
     }
 
     const smooth = (t) => t * t * (3 - 2 * t);
-    let shown = null;
 
-    function setShown(on) {
-      if (shown === on) return;
-      shown = on;
-      card.style.display = on ? "block" : "none";
-    }
-
-    function update() {
-      const vh = window.innerHeight;
+    // Géométrie du trajet (en coordonnées de la page)
+    function measure() {
       const box = slot.getBoundingClientRect();
       const top = box.top + window.scrollY;
       const left = box.left + window.scrollX;
       // fin du trajet : la capture est centrée dans l'écran (ou au plus haut possible)
       const endScroll = Math.max(top - Math.max((vh - box.height) / 2, 80), vh * 0.35);
       const startScroll = vh * 0.04;
-      const t = Math.min(Math.max((window.scrollY - startScroll) / (endScroll - startScroll), 0), 1);
+      return { top, left, w: box.width, h: box.height, startScroll, endScroll };
+    }
 
-      const flying = t > 0 && t < 1;
-      // l'écran de l'anneau s'efface pendant que sa copie apparaît
-      panel0.holder.visible = t < 0.14;
-      img.style.visibility = flying ? "hidden" : "";
-      setShown(flying);
-      if (!flying) return;
-
-      sourceCorners();
-      // vu de dos (au fond de l'anneau), l'écran apparaîtrait en miroir : on remet l'image à l'endroit
-      const area =
-        (src[1][0] - src[0][0]) * (src[3][1] - src[0][1]) - (src[1][1] - src[0][1]) * (src[3][0] - src[0][0]);
-      if (area < 0) {
-        [src[0], src[1]] = [src[1], src[0]];
-        [src[2], src[3]] = [src[3], src[2]];
-      }
-      const w = box.width;
-      const h = box.height;
+    // État de la carte à l'avancement t (0 : dans l'anneau, 1 : sur la capture)
+    function stateAt(t, g) {
+      const { top, left, w, h } = g;
       const dst = [
         [left, top],
         [left + w, top],
@@ -523,34 +524,129 @@ function init() {
       const lift = Math.sin(Math.PI * e) * 0.06;
       const mx = (src.reduce((a, p) => a + p[0], 0) / 4) * (1 - e) + (left + w / 2) * e;
       const my = (src.reduce((a, p) => a + p[1], 0) / 4) * (1 - e) + (top + h / 2) * e;
-      // coins relatifs à la carte, elle-même posée sur l'emplacement de la capture
       const pts = src.map(([sx, sy], i) => {
         const x = sx + (dst[i][0] - sx) * e;
         const y = sy + (dst[i][1] - sy) * e;
         return [mx + (x - mx) * (1 + lift) - left, my + (y - my) * (1 + lift) - top];
       });
-
-      card.style.top = `${top}px`;
-      card.style.left = `${left}px`;
-      card.style.width = `${w}px`;
-      card.style.height = `${h}px`;
-      card.style.transform = matrix3d(pts, w, h);
-      card.style.opacity = smooth(Math.min(t / 0.16, 1)).toFixed(3); // il sort de sa place en fondu
-      card.style.borderRadius = `${(R_X * (1 - e)).toFixed(3)}% / ${(R_Y * (1 - e)).toFixed(3)}%`;
-
       // recadrage : image entière dans l'anneau, puis même cadrage que la capture (cover, calée en haut)
       const ia = (img.naturalWidth || 1600) / (img.naturalHeight || 1000);
       const ba = w / h;
-      if (ba > ia) {
-        pic.style.width = "100%";
-        pic.style.left = "0";
-        pic.style.height = `${(100 * (1 + (ba / ia - 1) * e)).toFixed(3)}%`;
-      } else {
-        const k = 1 + (ia / ba - 1) * e;
-        pic.style.height = "100%";
-        pic.style.width = `${(100 * k).toFixed(3)}%`;
-        pic.style.left = `${(-50 * (k - 1)).toFixed(3)}%`;
+      const k = ba > ia ? 1 + (ba / ia - 1) * e : 1 + (ia / ba - 1) * e;
+      return {
+        transform: matrix3d(pts, w, h),
+        opacity: +smooth(Math.min(t / 0.16, 1)).toFixed(3), // il sort de sa place en fondu
+        borderRadius: `${(R_X * (1 - e)).toFixed(3)}% / ${(R_Y * (1 - e)).toFixed(3)}%`,
+        pic: ba > ia ? `scaleY(${k.toFixed(5)})` : `scaleX(${k.toFixed(5)})`,
+        picOrigin: ba > ia ? "50% 0" : "50% 50%",
+      };
+    }
+
+    function place(g) {
+      card.style.top = `${g.top}px`;
+      card.style.left = `${g.left}px`;
+      card.style.width = `${g.w}px`;
+      card.style.height = `${g.h}px`;
+    }
+
+    const progress = (g) => Math.min(Math.max((window.scrollY - g.startScroll) / (g.endScroll - g.startScroll), 0), 1);
+
+    // --- Mode 1 : animation pilotée par le défilement (Chrome, Safari 26+) ---
+    // Le navigateur calcule lui-même la position de la carte à chaque image de défilement,
+    // sur le fil du compositeur : elle reste parfaitement en phase avec la page, même sur iPhone.
+    // Le script ne fait que recalculer les images-clés quand l'anneau bouge.
+    let driven = null;
+    if (typeof window.ScrollTimeline === "function") {
+      try {
+        const timeline = new ScrollTimeline({ source: document.documentElement, axis: "block" });
+        const opts = { timeline, fill: "both" };
+        driven = {
+          timeline,
+          card: card.animate([{ opacity: 0 }, { opacity: 0 }], opts),
+          radius: card.animate([{ borderRadius: "0" }, { borderRadius: "0" }], opts),
+          pic: pic.animate([{ transform: "none" }, { transform: "none" }], opts),
+          key: "",
+        };
+      } catch {
+        driven = null;
       }
+    }
+    card.style.display = driven ? "block" : "none";
+
+    // Défilement maximal tel que le voit la timeline (sur iPhone, il dépend de la barre de Safari)
+    function maxScroll() {
+      const p = driven.timeline.currentTime;
+      const pct = p && typeof p === "object" ? p.value : null;
+      if (pct > 1 && window.scrollY > 20) return (window.scrollY * 100) / pct;
+      return document.documentElement.scrollHeight - window.innerHeight;
+    }
+
+    const STEPS = 40;
+    function rebuild(g) {
+      const max = maxScroll();
+      if (!(max > g.endScroll)) return;
+      const key = [
+        ...src.flat().map((v) => Math.round(v * 2)),
+        Math.round(g.top), Math.round(g.left), Math.round(g.w), Math.round(g.h),
+        Math.round(g.startScroll), Math.round(g.endScroll), Math.round(max / 8), img.naturalWidth,
+      ].join(",");
+      if (key === driven.key) return;
+      driven.key = key;
+      place(g);
+
+      const kCard = [];
+      const kRadius = [];
+      const kPic = [];
+      const off = (s) => Math.min(Math.max(s / max, 0), 1);
+      let origin = "50% 50%";
+      for (let i = 0; i <= STEPS; i++) {
+        const t = i / STEPS;
+        const s = stateAt(t, g);
+        const offset = off(g.startScroll + (g.endScroll - g.startScroll) * t);
+        kCard.push({ offset, transform: s.transform, opacity: s.opacity });
+        kRadius.push({ offset, borderRadius: s.borderRadius });
+        kPic.push({ offset, transform: s.pic });
+        origin = s.picOrigin;
+      }
+      // une fois posée, la carte s'efface : la vraie capture, identique, prend le relais
+      const last = kCard[kCard.length - 1];
+      kCard.push({ offset: Math.min(last.offset + 0.5 / max, 1), transform: last.transform, opacity: 0 });
+      kCard.push({ offset: 1, transform: last.transform, opacity: 0 });
+      pic.style.transformOrigin = origin;
+      driven.card.effect.setKeyframes(kCard);
+      driven.radius.effect.setKeyframes(kRadius);
+      driven.pic.effect.setKeyframes(kPic);
+    }
+
+    // --- Mode 2 (navigateurs plus anciens) : le script suit le défilement image par image ---
+    let shown = null;
+    function setShown(on) {
+      if (shown === on) return;
+      shown = on;
+      card.style.display = on ? "block" : "none";
+    }
+    function apply(t, g) {
+      setShown(t > 0 && t < 1);
+      if (!(t > 0 && t < 1)) return;
+      place(g);
+      const s = stateAt(t, g);
+      card.style.transform = s.transform;
+      card.style.opacity = String(s.opacity);
+      card.style.borderRadius = s.borderRadius;
+      pic.style.transformOrigin = s.picOrigin;
+      pic.style.transform = s.pic;
+    }
+
+    function update() {
+      const g = measure();
+      const t = progress(g);
+      // l'écran de l'anneau s'efface pendant que sa copie apparaît
+      panel0.holder.visible = t < 0.14;
+      img.style.visibility = t > 0 && t < 1 ? "hidden" : "";
+      // l'écran 01 n'est plus dessiné : sa position ne change plus, inutile de la recalculer
+      if (t < 0.14 || !driven) sourceCorners();
+      if (driven) rebuild(g);
+      else apply(t, g);
     }
 
     // hors du hero, la boucle 3D est en pause : on suit le scroll directement
@@ -565,7 +661,8 @@ function init() {
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
-    setShown(false);
+    pic.addEventListener("load", onScroll);
+    img.addEventListener("load", onScroll);
     return { update };
   }
 
