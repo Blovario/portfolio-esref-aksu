@@ -1,11 +1,12 @@
 /*
  * Le point vert qui accompagne la lecture.
  * Les points du sol du hero se rassemblent en un seul (hero.js) ; ce point prend ensuite le relais
- * dans la page : il descend avec la capture du projet 01, se pose à côté de son numéro,
+ * dans la page : il descend jusqu'au projet 01, se pose à côté de son numéro,
  * puis glisse de projet en projet au fil du défilement.
  */
 
-export const DOT = 8; // diamètre du point (px), identique dans la scène 3D et dans la page
+// diamètre du point (px), identique dans la scène 3D et dans la page
+export const dotSize = () => (window.innerWidth <= 800 ? 11 : 13);
 
 const smooth = (t) => t * t * (3 - 2 * t);
 const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
@@ -18,10 +19,16 @@ export function createDot({ getVh }) {
   const el = document.createElement("div");
   el.className = "scroll-dot";
   el.setAttribute("aria-hidden", "true");
-  el.innerHTML = "<b><i></i></b>";
+  el.innerHTML = "<b><s><i></i></s></b>";
   document.body.appendChild(el);
   const body = el.firstChild;
-  const core = body.firstChild;
+  let size = 0;
+  const setSize = () => {
+    if (size === dotSize()) return;
+    size = dotSize();
+    el.style.setProperty("--dot", `${size}px`);
+  };
+  setSize();
 
   // première ligne de texte de chaque repère (le bloc peut être plus large que le texte)
   const ranges = anchors.map((a) => {
@@ -47,7 +54,7 @@ export function createDot({ getVh }) {
       if (r.top < vh * 0.62) active = i;
     });
     const r = lines[active];
-    let x = Math.max(r.left - (12 + r.height * 0.14), 8);
+    let x = Math.max(r.left - (size / 2 + 7 + r.height * 0.1), size / 2 + 3);
     let y = r.top + r.height / 2;
     let travel = false;
 
@@ -113,6 +120,12 @@ export function createDot({ getVh }) {
       off.x = off.y = off.vx = off.vy = 0;
       px = t.x;
       py = t.y;
+      // il sort tout juste du noyau de la scène 3D : petite éclosion
+      if (t.key < 0) {
+        el.classList.remove("is-born");
+        void el.offsetWidth;
+        el.classList.add("is-born");
+      }
       setOn(true);
     } else {
       const dx = t.x - prev.x;
@@ -172,11 +185,16 @@ export function createDot({ getVh }) {
   }
 
   window.addEventListener("scroll", kick, { passive: true });
-  window.addEventListener("resize", kick);
+  window.addEventListener("resize", () => {
+    setSize();
+    kick();
+  });
   // la page bouge aussi sans défilement : apparition des projets, images qui se chargent
   document.addEventListener("transitionend", kick, true);
   if ("ResizeObserver" in window) new ResizeObserver(kick).observe(document.body);
-  core.addEventListener("animationend", () => el.classList.remove("is-landing"));
+  el.addEventListener("animationend", (e) => {
+    if (e.animationName === "scroll-dot-ring") el.classList.remove("is-landing", "is-born");
+  });
   kick();
 
   return {

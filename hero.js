@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { FOV, W, H, RADIUS_CORNER, RIG_TILT, FLOOR, floorPoints, ringRadius, layoutHero, pickSrc } from "./hero-geometry.js";
-import { DOT, createDot } from "./dot.js";
+import { dotSize, createDot } from "./dot.js";
 
 /*
  * Hero 3D : les écrans des projets montés en anneau.
@@ -187,28 +187,32 @@ function init() {
       varying float vAlpha, vLit, vFog, vSpark, vPull;
       void main() {
         float r = length(position.xz);
-        // aspiration : les points proches partent d'abord, les plus lointains ensuite,
-        // chacun en spirale vers le point de rassemblement, en se soulevant un peu
-        float delay = 0.5 * clamp(r / uFadeTo, 0.0, 1.0) + 0.12 * aRand;
-        float q = clamp((uGather - delay) / 0.38, 0.0, 1.0);
-        float e = q * q * (3.0 - 2.0 * q);
-        // petite spirale : les points lointains (grands à l'écran) tournent moins
-        float sw = e * (1.1 + 0.9 * aRand) * clamp(2.5 / max(r, 0.1), 0.25, 1.0);
-        float cs = cos(sw), sn = sin(sw);
-        vec3 p = vec3(position.x * cs - position.z * sn, 0.0, position.x * sn + position.z * cs);
-        p = mix(p, uTarget, e);
-        p.y += sin(3.14159 * e) * (0.1 + 0.3 * aRand);
+        // Aspiration en tourbillon vers le point de rassemblement.
+        // Les points proches partent d'abord ; chacun recule à peine, puis est aspiré
+        // de plus en plus vite en tournant, se soulève un peu en chemin et disparaît dans le noyau.
+        vec2 d0 = position.xz - uTarget.xz;
+        float rho = length(d0);
+        float th = atan(d0.y, d0.x);
+        float delay = 0.45 * clamp(rho / (uFadeTo + 2.0), 0.0, 1.0) + 0.15 * aRand;
+        float q = clamp((uGather - delay) / 0.4, 0.0, 1.0);
+        float k = 1.0 - q * q + 0.14 * sin(3.14159 * q) * (1.0 - q); // rayon restant (avec un petit recul)
+        // les points lointains (grands à l'écran) tournent moins pour ne pas balayer tout l'écran
+        float spin = min(2.6, 3.0 / max(rho, 0.1)) * (0.75 + 0.5 * aRand);
+        float a = th + spin * q * q;
+        float lift = pow(sin(3.14159 * q), 2.0) * 0.28 * (0.5 + aRand) * min(rho / 3.0, 1.0);
+        vec3 p = vec3(uTarget.x + cos(a) * rho * k, mix(0.0, uTarget.y, q * q) + lift, uTarget.z + sin(a) * rho * k);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
-        vPull = e;
-        vLit = max(clamp((uReveal - r - aRand * 1.6) / 0.8, 0.0, 1.0), e);
-        vAlpha = vLit * (1.0 - smoothstep(uFadeFrom, uFadeTo, r)) * (1.0 - smoothstep(0.82, 1.0, e));
-        vFog = smoothstep(uFogNear, uFogFar, -mv.z) * (1.0 - e);
+        vPull = smoothstep(0.0, 0.25, q);
+        vLit = max(clamp((uReveal - r - aRand * 1.6) / 0.8, 0.0, 1.0), step(0.001, q));
+        vAlpha = vLit * (1.0 - smoothstep(uFadeFrom, uFadeTo, r)) * (1.0 - smoothstep(0.88, 1.0, q));
+        vFog = smoothstep(uFogNear, uFogFar, -mv.z) * (1.0 - vPull);
         // une étincelle rare : chaque point s'éclaire une fois toutes les 2 min environ,
         // pendant une demi-seconde (2 ou 3 points à la fois sur l'ensemble du sol)
         float ph = fract(uTime / 120.0 + aRand * 17.0);
-        vSpark = uBlink * (1.0 - e) * smoothstep(0.0, 0.0008, ph) * (1.0 - smoothstep(0.0008, 0.004, ph));
-        gl_PointSize = uSize * uScale / -mv.z * (1.0 + vSpark * 0.8) * (1.0 - 0.45 * e);
+        vSpark = uBlink * (1.0 - vPull) * smoothstep(0.0, 0.0008, ph) * (1.0 - smoothstep(0.0008, 0.004, ph));
+        gl_PointSize = uSize * uScale / -mv.z * (1.0 + vSpark * 0.8)
+          * (1.0 + 0.6 * sin(3.14159 * q)) * (1.0 - 0.6 * smoothstep(0.7, 1.0, q));
       }`,
     fragmentShader: `
       uniform vec3 uColor, uGreen, uFog;
@@ -229,29 +233,35 @@ function init() {
   floor.position.y = FLOOR.y;
   rig.add(floor);
 
-  // Le point qui grossit à mesure que les autres le rejoignent : taille fixe à l'écran,
-  // la même que celui de la page, qui le remplace à la fin du rassemblement
+  // Le noyau : il gonfle et rayonne à mesure que les points le rejoignent. Taille fixe à l'écran,
+  // il finit à la taille du point de la page, qui le remplace à la fin du rassemblement.
   const coreGeo = new THREE.BufferGeometry();
   coreGeo.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0], 3));
   const coreMat = new THREE.ShaderMaterial({
     transparent: true,
     depthTest: false,
     depthWrite: false,
-    uniforms: { uColor: { value: new THREE.Color(GREEN) }, uPx: { value: 0 } },
+    uniforms: { uColor: { value: new THREE.Color(GREEN) }, uDisc: { value: 0 }, uGlow: { value: 0 } },
     vertexShader: `
-      uniform float uPx;
+      uniform float uDisc;
+      varying float vPx;
       void main() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = uPx;
+        vPx = uDisc * 4.0 + 16.0; // de la place autour du disque pour le halo
+        gl_PointSize = vPx;
       }`,
     fragmentShader: `
       uniform vec3 uColor;
-      uniform float uPx;
+      uniform float uDisc, uGlow;
+      varying float vPx;
       void main() {
-        float l = length(gl_PointCoord - 0.5) * uPx;
-        float m = 1.0 - smoothstep(uPx * 0.5 - 1.0, uPx * 0.5, l);
-        if (m <= 0.0) discard;
-        gl_FragColor = vec4(uColor, m);
+        float l = length(gl_PointCoord - 0.5) * vPx; // distance au centre, en pixels
+        float rad = uDisc * 0.5;
+        float disc = 1.0 - smoothstep(rad - 1.0, rad, l);
+        float halo = uGlow * 0.5 * exp(-max(l - rad, 0.0) / (rad * 0.8 + 2.0));
+        float a = max(disc, halo);
+        if (a <= 0.004) discard;
+        gl_FragColor = vec4(uColor, a);
         #include <colorspace_fragment>
       }`,
   });
@@ -437,9 +447,6 @@ function init() {
     lastInteraction = performance.now();
   });
 
-  // --- Passage de relais : l'écran 01 quitte l'anneau et se pose sur sa capture ---
-  const flight = createFlight();
-
   // --- Boucle ---
   const clock = new THREE.Clock();
   const WHITE = new THREE.Color(0xffffff);
@@ -480,8 +487,12 @@ function init() {
     // au défilement, les points se rassemblent ; le point de la page prend le relais à la fin
     const gather = gatherAt();
     floorMat.uniforms.uGather.value = gather;
-    core.visible = gather > 0.3 && gather < 1;
-    coreMat.uniforms.uPx.value = DOT * renderer.getPixelRatio() * Math.min(Math.max((gather - 0.3) / 0.7, 0), 1);
+    const grow = clamp01((gather - 0.12) / 0.8);
+    core.visible = grow > 0 && gather < 1;
+    // il gonfle à mesure que les points arrivent, palpite un peu, et rayonne surtout au milieu
+    const beat = 1 + Math.sin(t * 9) * 0.06 * Math.sin(Math.PI * grow);
+    coreMat.uniforms.uDisc.value = dotSize() * renderer.getPixelRatio() * Math.sqrt(grow) * beat;
+    coreMat.uniforms.uGlow.value = Math.sin(Math.PI * Math.min(grow * 1.15, 1));
 
     // la souris ne fait bouger l'anneau qu'une fois son arrivée terminée
     const live = k >= 1 ? 1 - Math.exp(-dt * 3) : 0;
@@ -504,7 +515,6 @@ function init() {
 
     renderer.render(scene, camera);
     sendSource();
-    flight?.update();
     // toutes les captures sont chargées : une image de préchauffe (envoi des textures
     // à la carte graphique, invisible car minuscule), puis l'anneau jaillit
     if (!ready && warming) {
@@ -528,241 +538,6 @@ function init() {
 
   function stop() {
     running = false;
-  }
-
-  function createFlight() {
-    if (reduceMotion) return null;
-    const article = document.getElementById(projects[0].id);
-    const img = article?.querySelector(".project-media img");
-    if (!img) return null;
-    const slot = img.parentElement;
-
-    // Une carte HTML posée DANS la page, à l'emplacement de la capture, déformée en CSS 3D
-    // entre l'écran 01 de l'anneau et sa place finale.
-    const card = document.createElement("div");
-    card.className = "flight-card";
-    card.setAttribute("aria-hidden", "true");
-    const pic = document.createElement("img");
-    pic.alt = "";
-    pic.decoding = "async";
-    pic.src = pickSrc(img);
-    card.appendChild(pic);
-    document.body.appendChild(card);
-
-    const corners = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
-    const local = [
-      [-W / 2, H / 2],
-      [W / 2, H / 2],
-      [W / 2, -H / 2],
-      [-W / 2, -H / 2],
-    ];
-    const src = local.map(() => [0, 0]);
-    const panel0 = panels[0];
-    const R_X = (RADIUS_CORNER / W) * 100;
-    const R_Y = (RADIUS_CORNER / H) * 100;
-
-    // Coins de l'écran 01 dans l'anneau, en coordonnées de la PAGE (pas de la fenêtre)
-    function sourceCorners() {
-      const rect = canvas.getBoundingClientRect();
-      panel0.holder.updateWorldMatrix(true, false);
-      local.forEach(([x, y], i) => {
-        corners[i].set(x, y, 0).applyMatrix4(panel0.holder.matrixWorld).project(camera);
-        src[i][0] = rect.left + window.scrollX + ((corners[i].x + 1) / 2) * rect.width;
-        src[i][1] = rect.top + window.scrollY + ((1 - corners[i].y) / 2) * rect.height;
-      });
-      // vu de dos (au fond de l'anneau), l'écran apparaîtrait en miroir : on remet l'image à l'endroit
-      const area =
-        (src[1][0] - src[0][0]) * (src[3][1] - src[0][1]) - (src[1][1] - src[0][1]) * (src[3][0] - src[0][0]);
-      if (area < 0) {
-        [src[0], src[1]] = [src[1], src[0]];
-        [src[2], src[3]] = [src[3], src[2]];
-      }
-    }
-
-    // Transformation projective : rectangle de la carte → quadrilatère
-    function matrix3d(p, ew, eh) {
-      const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = p;
-      const dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2;
-      const sx = x0 - x1 + x2 - x3, sy = y0 - y1 + y2 - y3;
-      const den = dx1 * dy2 - dx2 * dy1 || 1e-9;
-      const g = (sx * dy2 - dx2 * sy) / den;
-      const h = (dx1 * sy - sx * dy1) / den;
-      const a = x1 - x0 + g * x1, b = x3 - x0 + h * x3;
-      const d = y1 - y0 + g * y1, e = y3 - y0 + h * y3;
-      const m = [a / ew, d / ew, 0, g / ew, b / eh, e / eh, 0, h / eh, 0, 0, 1, 0, x0, y0, 0, 1];
-      return `matrix3d(${m.map((v) => +v.toFixed(8)).join(",")})`;
-    }
-
-    const smooth = (t) => t * t * (3 - 2 * t);
-
-    // Géométrie du trajet (en coordonnées de la page)
-    function measure() {
-      const box = slot.getBoundingClientRect();
-      const top = box.top + window.scrollY;
-      const left = box.left + window.scrollX;
-      // fin du trajet : la capture est centrée dans l'écran (ou au plus haut possible)
-      const endScroll = Math.max(top - Math.max((vh - box.height) / 2, 80), vh * 0.35);
-      const startScroll = vh * 0.04;
-      return { top, left, w: box.width, h: box.height, startScroll, endScroll };
-    }
-
-    // État de la carte à l'avancement t (0 : dans l'anneau, 1 : sur la capture)
-    function stateAt(t, g) {
-      const { top, left, w, h } = g;
-      const dst = [
-        [left, top],
-        [left + w, top],
-        [left + w, top + h],
-        [left, top + h],
-      ];
-      const e = smooth(t);
-      // petit arc : l'écran se soulève vers nous à mi-chemin
-      const lift = Math.sin(Math.PI * e) * 0.06;
-      const mx = (src.reduce((a, p) => a + p[0], 0) / 4) * (1 - e) + (left + w / 2) * e;
-      const my = (src.reduce((a, p) => a + p[1], 0) / 4) * (1 - e) + (top + h / 2) * e;
-      const pts = src.map(([sx, sy], i) => {
-        const x = sx + (dst[i][0] - sx) * e;
-        const y = sy + (dst[i][1] - sy) * e;
-        return [mx + (x - mx) * (1 + lift) - left, my + (y - my) * (1 + lift) - top];
-      });
-      // recadrage : image entière dans l'anneau, puis même cadrage que la capture (cover, calée en haut)
-      const ia = (img.naturalWidth || 1600) / (img.naturalHeight || 1000);
-      const ba = w / h;
-      const k = ba > ia ? 1 + (ba / ia - 1) * e : 1 + (ia / ba - 1) * e;
-      return {
-        transform: matrix3d(pts, w, h),
-        opacity: +smooth(Math.min(t / 0.16, 1)).toFixed(3), // il sort de sa place en fondu
-        borderRadius: `${(R_X * (1 - e)).toFixed(3)}% / ${(R_Y * (1 - e)).toFixed(3)}%`,
-        pic: ba > ia ? `scaleY(${k.toFixed(5)})` : `scaleX(${k.toFixed(5)})`,
-        picOrigin: ba > ia ? "50% 0" : "50% 50%",
-      };
-    }
-
-    function place(g) {
-      card.style.top = `${g.top}px`;
-      card.style.left = `${g.left}px`;
-      card.style.width = `${g.w}px`;
-      card.style.height = `${g.h}px`;
-    }
-
-    const progress = (g) => Math.min(Math.max((window.scrollY - g.startScroll) / (g.endScroll - g.startScroll), 0), 1);
-
-    // --- Mode 1 : animation pilotée par le défilement (Chrome, Safari 26+) ---
-    // Le navigateur calcule lui-même la position de la carte à chaque image de défilement,
-    // sur le fil du compositeur : elle reste parfaitement en phase avec la page, même sur iPhone.
-    // Le script ne fait que recalculer les images-clés quand l'anneau bouge.
-    let driven = null;
-    if (typeof window.ScrollTimeline === "function") {
-      try {
-        const timeline = new ScrollTimeline({ source: document.documentElement, axis: "block" });
-        const opts = { timeline, fill: "both" };
-        driven = {
-          timeline,
-          card: card.animate([{ opacity: 0 }, { opacity: 0 }], opts),
-          radius: card.animate([{ borderRadius: "0" }, { borderRadius: "0" }], opts),
-          pic: pic.animate([{ transform: "none" }, { transform: "none" }], opts),
-          key: "",
-        };
-      } catch {
-        driven = null;
-      }
-    }
-    card.style.display = driven ? "block" : "none";
-
-    // Défilement maximal tel que le voit la timeline (sur iPhone, il dépend de la barre de Safari)
-    function maxScroll() {
-      const p = driven.timeline.currentTime;
-      const pct = p && typeof p === "object" ? p.value : null;
-      if (pct > 1 && window.scrollY > 20) return (window.scrollY * 100) / pct;
-      return document.documentElement.scrollHeight - window.innerHeight;
-    }
-
-    const STEPS = 40;
-    function rebuild(g) {
-      const max = maxScroll();
-      if (!(max > g.endScroll)) return;
-      const key = [
-        ...src.flat().map((v) => Math.round(v * 2)),
-        Math.round(g.top), Math.round(g.left), Math.round(g.w), Math.round(g.h),
-        Math.round(g.startScroll), Math.round(g.endScroll), Math.round(max / 8), img.naturalWidth,
-      ].join(",");
-      if (key === driven.key) return;
-      driven.key = key;
-      place(g);
-
-      // sans image-clé tout en haut de la page, le navigateur interpolerait depuis l'état « au repos »
-      // de la carte (opaque, posée sur la capture) : elle surgissait d'en bas avant de remonter
-      const s0 = stateAt(0, g);
-      const kCard = [{ offset: 0, transform: s0.transform, opacity: 0 }];
-      const kRadius = [{ offset: 0, borderRadius: s0.borderRadius }];
-      const kPic = [{ offset: 0, transform: s0.pic }];
-      const off = (s) => Math.min(Math.max(s / max, 0), 1);
-      let origin = "50% 50%";
-      for (let i = 0; i <= STEPS; i++) {
-        const t = i / STEPS;
-        const s = stateAt(t, g);
-        const offset = off(g.startScroll + (g.endScroll - g.startScroll) * t);
-        kCard.push({ offset, transform: s.transform, opacity: s.opacity });
-        kRadius.push({ offset, borderRadius: s.borderRadius });
-        kPic.push({ offset, transform: s.pic });
-        origin = s.picOrigin;
-      }
-      // une fois posée, la carte s'efface : la vraie capture, identique, prend le relais
-      const last = kCard[kCard.length - 1];
-      kCard.push({ offset: Math.min(last.offset + 0.5 / max, 1), transform: last.transform, opacity: 0 });
-      kCard.push({ offset: 1, transform: last.transform, opacity: 0 });
-      pic.style.transformOrigin = origin;
-      driven.card.effect.setKeyframes(kCard);
-      driven.radius.effect.setKeyframes(kRadius);
-      driven.pic.effect.setKeyframes(kPic);
-    }
-
-    // --- Mode 2 (navigateurs plus anciens) : le script suit le défilement image par image ---
-    let shown = null;
-    function setShown(on) {
-      if (shown === on) return;
-      shown = on;
-      card.style.display = on ? "block" : "none";
-    }
-    function apply(t, g) {
-      setShown(t > 0 && t < 1);
-      if (!(t > 0 && t < 1)) return;
-      place(g);
-      const s = stateAt(t, g);
-      card.style.transform = s.transform;
-      card.style.opacity = String(s.opacity);
-      card.style.borderRadius = s.borderRadius;
-      pic.style.transformOrigin = s.picOrigin;
-      pic.style.transform = s.pic;
-    }
-
-    function update() {
-      const g = measure();
-      const t = progress(g);
-      // l'écran de l'anneau s'efface pendant que sa copie apparaît
-      panel0.holder.visible = t < 0.14;
-      img.style.visibility = t > 0 && t < 1 ? "hidden" : "";
-      // l'écran 01 n'est plus dessiné : sa position ne change plus, inutile de la recalculer
-      if (t < 0.14 || !driven) sourceCorners();
-      if (driven) rebuild(g);
-      else apply(t, g);
-    }
-
-    // hors du hero, la boucle 3D est en pause : on suit le scroll directement
-    let queued = false;
-    const onScroll = () => {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(() => {
-        queued = false;
-        if (!running) update();
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    pic.addEventListener("load", onScroll);
-    img.addEventListener("load", onScroll);
-    return { update };
   }
 
   resize();
