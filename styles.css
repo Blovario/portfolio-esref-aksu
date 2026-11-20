@@ -1661,3 +1661,83 @@ mini…) : tout le hero tient dans l'écran */
   max-width: none;
   object-fit: fill;
 }
+
+/* Le point vert qui accompagne la lecture (dot.js) : né du sol du hero, il se pose à côté du projet en cours */
+.scroll-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 95;
+  width: 0;
+  height: 0;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.scroll-dot.is-on {
+  visibility: visible;
+}
+
+.nav-open .scroll-dot {
+  visibility: hidden;
+}
+
+.scroll-dot b {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  display: block;
+  width: 8px;
+  height: 8px;
+}
+
+.scroll-dot i {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--green);
+  animation: scroll-dot-breathe 3.2s ease-in-out 1.5s infinite;
+}
+
+.scroll-dot i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid var(--green);
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.scroll-dot.is-landing i::after {
+  animation: scroll-dot-ring 700ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+@keyframes scroll-dot-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+@keyframes scroll-dot-ring {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(3.4);
+  }
+}
+
+@media print {
+  .scroll-dot {
+    display: none;
+  }
+}

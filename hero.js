@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { FOV, W, H, RADIUS_CORNER, RIG_TILT, FLOOR, floorPoints, ringRadius, layoutHero, pickSrc } from "./hero-geometry.js";
+import { DOT, createDot } from "./dot.js";
 
 /*
  * Hero 3D : les écrans des projets montés en anneau.
@@ -153,6 +154,9 @@ function init() {
 
   // Sol : des points en cercles autour de l'anneau. Ils s'allument en vague à l'arrivée,
   // puis, de temps en temps, l'un d'eux s'éclaire brièvement en vert.
+  // Au défilement, ils sont aspirés en spirale vers un seul point, devant l'écran de face :
+  // ce point quitte ensuite la scène et accompagne la lecture (dot.js).
+  const GATHER = new THREE.Vector3(0, 0, R + 1); // point de rassemblement, dans le repère du sol
   const fp = floorPoints();
   const floorGeo = new THREE.BufferGeometry();
   floorGeo.setAttribute("position", new THREE.Float32BufferAttribute(fp.flatMap(([x, z]) => [x, 0, z]), 3));
@@ -173,34 +177,49 @@ function init() {
       uFadeTo: { value: FLOOR.fadeTo },
       uTime: { value: 0 },
       uBlink: { value: 0 }, // 0 pendant l'arrivée, 1 ensuite
+      uGather: { value: 0 }, // 0 : sol en place, 1 : tous les points rassemblés
+      uTarget: { value: GATHER },
     },
     vertexShader: `
       attribute float aRand;
-      uniform float uSize, uScale, uReveal, uFogNear, uFogFar, uFadeFrom, uFadeTo, uTime, uBlink;
-      varying float vAlpha, vLit, vFog, vSpark;
+      uniform float uSize, uScale, uReveal, uFogNear, uFogFar, uFadeFrom, uFadeTo, uTime, uBlink, uGather;
+      uniform vec3 uTarget;
+      varying float vAlpha, vLit, vFog, vSpark, vPull;
       void main() {
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        gl_Position = projectionMatrix * mv;
         float r = length(position.xz);
-        vLit = clamp((uReveal - r - aRand * 1.6) / 0.8, 0.0, 1.0);
-        vAlpha = vLit * (1.0 - smoothstep(uFadeFrom, uFadeTo, r));
-        vFog = smoothstep(uFogNear, uFogFar, -mv.z);
+        // aspiration : les points proches partent d'abord, les plus lointains ensuite,
+        // chacun en spirale vers le point de rassemblement, en se soulevant un peu
+        float delay = 0.5 * clamp(r / uFadeTo, 0.0, 1.0) + 0.12 * aRand;
+        float q = clamp((uGather - delay) / 0.38, 0.0, 1.0);
+        float e = q * q * (3.0 - 2.0 * q);
+        // petite spirale : les points lointains (grands à l'écran) tournent moins
+        float sw = e * (1.1 + 0.9 * aRand) * clamp(2.5 / max(r, 0.1), 0.25, 1.0);
+        float cs = cos(sw), sn = sin(sw);
+        vec3 p = vec3(position.x * cs - position.z * sn, 0.0, position.x * sn + position.z * cs);
+        p = mix(p, uTarget, e);
+        p.y += sin(3.14159 * e) * (0.1 + 0.3 * aRand);
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        gl_Position = projectionMatrix * mv;
+        vPull = e;
+        vLit = max(clamp((uReveal - r - aRand * 1.6) / 0.8, 0.0, 1.0), e);
+        vAlpha = vLit * (1.0 - smoothstep(uFadeFrom, uFadeTo, r)) * (1.0 - smoothstep(0.82, 1.0, e));
+        vFog = smoothstep(uFogNear, uFogFar, -mv.z) * (1.0 - e);
         // une étincelle rare : chaque point s'éclaire une fois toutes les 2 min environ,
         // pendant une demi-seconde (2 ou 3 points à la fois sur l'ensemble du sol)
         float ph = fract(uTime / 120.0 + aRand * 17.0);
-        vSpark = uBlink * smoothstep(0.0, 0.0008, ph) * (1.0 - smoothstep(0.0008, 0.004, ph));
-        gl_PointSize = uSize * uScale / -mv.z * (1.0 + vSpark * 0.8);
+        vSpark = uBlink * (1.0 - e) * smoothstep(0.0, 0.0008, ph) * (1.0 - smoothstep(0.0008, 0.004, ph));
+        gl_PointSize = uSize * uScale / -mv.z * (1.0 + vSpark * 0.8) * (1.0 - 0.45 * e);
       }`,
     fragmentShader: `
       uniform vec3 uColor, uGreen, uFog;
-      varying float vAlpha, vLit, vFog, vSpark;
+      varying float vAlpha, vLit, vFog, vSpark, vPull;
       void main() {
         // points ronds
         vec2 d = gl_PointCoord - 0.5;
         float m = 1.0 - smoothstep(0.38, 0.5, length(d));
         if (vAlpha * m <= 0.0) discard;
         // éclat vert à l'allumage, puis étincelles occasionnelles
-        float g = max(1.0 - smoothstep(0.0, 1.0, vLit), vSpark);
+        float g = max(max(1.0 - smoothstep(0.0, 1.0, vLit), vSpark), vPull);
         vec3 c = mix(uColor, uGreen, g);
         gl_FragColor = vec4(mix(c, uFog, vFog), vAlpha * m * max(1.0, vSpark * 1.6));
         #include <colorspace_fragment>
@@ -209,6 +228,39 @@ function init() {
   const floor = new THREE.Points(floorGeo, floorMat);
   floor.position.y = FLOOR.y;
   rig.add(floor);
+
+  // Le point qui grossit à mesure que les autres le rejoignent : taille fixe à l'écran,
+  // la même que celui de la page, qui le remplace à la fin du rassemblement
+  const coreGeo = new THREE.BufferGeometry();
+  coreGeo.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0], 3));
+  const coreMat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    uniforms: { uColor: { value: new THREE.Color(GREEN) }, uPx: { value: 0 } },
+    vertexShader: `
+      uniform float uPx;
+      void main() {
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = uPx;
+      }`,
+    fragmentShader: `
+      uniform vec3 uColor;
+      uniform float uPx;
+      void main() {
+        float l = length(gl_PointCoord - 0.5) * uPx;
+        float m = 1.0 - smoothstep(uPx * 0.5 - 1.0, uPx * 0.5, l);
+        if (m <= 0.0) discard;
+        gl_FragColor = vec4(uColor, m);
+        #include <colorspace_fragment>
+      }`,
+  });
+  const core = new THREE.Points(coreGeo, coreMat);
+  core.position.copy(GATHER);
+  core.renderOrder = 2;
+  core.frustumCulled = false;
+  core.visible = false;
+  floor.add(core);
 
   // --- État ---
   let angle = 0; // rotation courante de l'anneau
@@ -227,6 +279,38 @@ function init() {
 
   const ndc = new THREE.Vector2();
   const ray = new THREE.Raycaster();
+
+  // Hauteur d'écran stable : sur iPhone, innerHeight change quand la barre de Safari se replie
+  // pendant le défilement, ce qui faisait sauter les trajets pilotés par le scroll. On ne la relit
+  // qu'en cas de vrai redimensionnement (rotation, fenêtre).
+  let vw = window.innerWidth;
+  let vh = window.innerHeight;
+  window.addEventListener("resize", () => {
+    if (window.innerWidth === vw && Math.abs(window.innerHeight - vh) < 160) return;
+    vw = window.innerWidth;
+    vh = window.innerHeight;
+  });
+
+  // Rassemblement des points du sol : sur le premier tiers d'écran de défilement
+  // (plus vite sur téléphone, où l'anneau passe tôt sous le menu)
+  const GATHER_FROM = 0.04;
+  let gatherSpan = 0.32;
+  const gatherAt = () => (reduceMotion ? 0 : clamp01((window.scrollY - vh * GATHER_FROM) / (vh * gatherSpan)));
+  const dot = reduceMotion ? null : createDot({ getVh: () => vh });
+  const gatherWorld = new THREE.Vector3();
+
+  // Position du point de rassemblement dans la PAGE, transmise au point qui prend le relais
+  function sendSource() {
+    if (!dot) return;
+    const rect = canvas.getBoundingClientRect();
+    floor.updateWorldMatrix(true, false);
+    gatherWorld.copy(GATHER).applyMatrix4(floor.matrixWorld).project(camera);
+    dot.setHandoff(vh * (GATHER_FROM + gatherSpan));
+    dot.setSource(
+      rect.left + window.scrollX + ((gatherWorld.x + 1) / 2) * rect.width,
+      rect.top + window.scrollY + ((1 - gatherWorld.y) / 2) * rect.height
+    );
+  }
 
   function frontIndex() {
     const k = Math.round(-angle / STEP);
@@ -256,6 +340,11 @@ function init() {
     camera.lookAt(...view.target);
     camera.updateProjectionMatrix();
     layout = view.layout;
+    // empilé (téléphone), la caméra est proche : le point se forme juste sous l'écran, au-dessus du texte
+    if (view.stacked) GATHER.set(0, 0.32, R + 0.15);
+    else GATHER.set(0, 0, R + 1);
+    gatherSpan = view.stacked ? 0.2 : 0.32;
+    core.position.copy(GATHER);
     floorMat.uniforms.uFogNear.value = view.fog.near;
     floorMat.uniforms.uFogFar.value = view.fog.far;
     floorMat.uniforms.uFadeFrom.value = view.floor.fadeFrom;
@@ -388,6 +477,11 @@ function init() {
     floorMat.uniforms.uReveal.value = reduceMotion ? 99 : easeOut((k - 0.15) / 1.6) * revealTo;
     floorMat.uniforms.uTime.value = t;
     floorMat.uniforms.uBlink.value = reduceMotion ? 0 : clamp01(k - 1.6);
+    // au défilement, les points se rassemblent ; le point de la page prend le relais à la fin
+    const gather = gatherAt();
+    floorMat.uniforms.uGather.value = gather;
+    core.visible = gather > 0.3 && gather < 1;
+    coreMat.uniforms.uPx.value = DOT * renderer.getPixelRatio() * Math.min(Math.max((gather - 0.3) / 0.7, 0), 1);
 
     // la souris ne fait bouger l'anneau qu'une fois son arrivée terminée
     const live = k >= 1 ? 1 - Math.exp(-dt * 3) : 0;
@@ -409,6 +503,7 @@ function init() {
     });
 
     renderer.render(scene, camera);
+    sendSource();
     flight?.update();
     // toutes les captures sont chargées : une image de préchauffe (envoi des textures
     // à la carte graphique, invisible car minuscule), puis l'anneau jaillit
@@ -465,17 +560,6 @@ function init() {
     const panel0 = panels[0];
     const R_X = (RADIUS_CORNER / W) * 100;
     const R_Y = (RADIUS_CORNER / H) * 100;
-
-    // Hauteur d'écran stable : sur iPhone, innerHeight change quand la barre de Safari se replie
-    // pendant le défilement, ce qui faisait sauter la fin du trajet. On ne la relit qu'en cas de
-    // vrai redimensionnement (rotation, fenêtre).
-    let vw = window.innerWidth;
-    let vh = window.innerHeight;
-    window.addEventListener("resize", () => {
-      if (window.innerWidth === vw && Math.abs(window.innerHeight - vh) < 160) return;
-      vw = window.innerWidth;
-      vh = window.innerHeight;
-    });
 
     // Coins de l'écran 01 dans l'anneau, en coordonnées de la PAGE (pas de la fenêtre)
     function sourceCorners() {
