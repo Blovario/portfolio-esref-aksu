@@ -338,18 +338,40 @@ export function createDot({ getVh }) {
     const heroBottom = hero.getBoundingClientRect().bottom + sy - 1;
     const first = items[0];
     M(source.x, source.y);
-    if (mob) {
-      // à droite, dans l'espace libre au-dessus de .hero-tag, puis dans la marge droite
-      const tag = document.querySelector(".hero-tag");
-      const tagTop = tag ? box(tag).t : source.y + 40;
-      const xR = first.inX;
-      const yRun = Math.max(Math.min(source.y + 16, tagTop - 14), source.y);
-      const rx = Math.min(80, Math.max(20, (xR - source.x) / 2));
-      const ry = 40;
-      const ax = xR - rx;
-      const dxA = ax - source.x;
-      Cb(source.x + 0.4 * dxA, source.y + 0.1 * (yRun - source.y), ax - 0.4 * dxA, yRun, ax, yRun);
-      Cb(ax + KAPPA * rx, yRun, xR, yRun + ry - KAPPA * ry, xR, yRun + ry);
+    if (hero.classList.contains("is-stacked")) {
+      // la source est à droite du titre : le fil part souplement vers la marge droite, puis y descend
+      // jusqu'au bas du hero, sans toucher le texte du hero (ligne d'accroche, projet en cours et sa flèche, indice)
+      const rects = [];
+      for (const e of hero.querySelectorAll(".hero-line, .hero-current, .hero-hint")) {
+        const tf = getComputedStyle(e).transform; // décalage de l'animation d'entrée
+        const dy = tf && tf !== "none" ? new DOMMatrix(tf).f : 0;
+        const rg = document.createRange();
+        rg.selectNodeContents(e);
+        for (const r of rg.getClientRects()) {
+          if (r.width >= 1 && r.height >= 1 && r.bottom + sy - dy > source.y) rects.push({ l: r.left + sx, r: r.right + sx });
+        }
+      }
+      const room = (x) => Math.min(Infinity, ...rects.map((q) => Math.max(q.l - x, x - q.r, 0)));
+      // colonne de descente : celle du premier repère si elle est dégagée, sinon la plus proche colonne dégagée
+      // (plus dégagée que 12 px si possible), pas trop loin à gauche de la source
+      let xR = first.inX;
+      if (room(xR) < 6 || xR < source.x - 120 || xR > Wd - 8) {
+        let best = null;
+        let bestRoom = -1;
+        for (let x = Math.max(source.x - 120, 24); x <= Wd - 8; x += 1) {
+          const rm = Math.min(room(x), 12);
+          if (rm > bestRoom + 0.01 || (Math.abs(rm - bestRoom) <= 0.01 && Math.abs(x - first.inX) < Math.abs(best - first.inX))) {
+            best = x;
+            bestRoom = rm;
+          }
+        }
+        if (best !== null) xR = best;
+      }
+      const dx = xR - source.x;
+      const yEnd = source.y + clamp(Math.abs(dx) * 0.9, 36, 90);
+      // part à l'horizontale, arrive à la verticale : courbe douce, sans angle
+      Cb(source.x + dx * 0.6, source.y, xR, yEnd - (yEnd - source.y) * 0.55, xR, yEnd);
+      vline(heroBottom);
     } else {
       // à gauche du « Glissez pour tourner », qui est sous le point
       const hint = document.querySelector(".hero-hint");

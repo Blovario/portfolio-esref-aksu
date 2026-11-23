@@ -342,6 +342,79 @@ function init() {
     }
   }
 
+  // Empilé : cible à l'écran du point de rassemblement (coordonnées du canvas, en px) : dans le vide à droite
+  // de la dernière ligne du titre, à l'écart de tout texte du hero. Renvoie null s'il n'y a pas de place.
+  const CLEAR = 24; // écart minimal au texte
+  const EDGE_R = 40; // écart minimal au bord droit
+  function stackedTarget(w) {
+    const box = hero.getBoundingClientRect();
+    const rects = [];
+    let last = null; // dernière ligne du h1
+    for (const el of hero.querySelectorAll(".hero-tag, .hero h1, .hero-line, .hero-current, .hero-hint")) {
+      // les blocs d'entrée sont décalés pendant leur animation : on mesure à leur place finale
+      const tf = getComputedStyle(el).transform;
+      const dy = tf && tf !== "none" ? new DOMMatrix(tf).f : 0;
+      const rg = document.createRange();
+      rg.selectNodeContents(el);
+      for (const r of rg.getClientRects()) {
+        if (r.width < 1 || r.height < 1) continue;
+        const q = { l: r.left - box.left, r: r.right - box.left, t: r.top - box.top - dy, b: r.bottom - box.top - dy };
+        rects.push(q);
+        if (el.tagName === "H1" && (!last || q.b > last.b + 1)) last = q;
+      }
+    }
+    if (!last) return null;
+    const gap = (x, y) => Math.min(...rects.map((q) => Math.hypot(Math.max(q.l - x, 0, x - q.r), Math.max(q.t - y, 0, y - q.b))));
+    const hi = w - EDGE_R;
+    // plage horizontale dégagée à la hauteur y : [lo, hi] (la plus large), ou null
+    const span = (y, from) => {
+      let best = null;
+      let cur = null;
+      for (let x = from; x <= hi; x += 2) {
+        if (gap(x, y) >= CLEAR) {
+          cur = cur ? [cur[0], x] : [x, x];
+          if (!best || cur[1] - cur[0] > best[1] - best[0]) best = cur;
+        } else cur = null;
+      }
+      return best;
+    };
+    const yc = (last.t + last.b) / 2;
+    // cas normal : milieu entre la fin de la ligne et le bord droit
+    if (w - last.r >= 90) {
+      const s0 = span(yc, last.r);
+      if (s0) return { x: Math.min(Math.max((last.r + w) / 2, s0[0]), s0[1]), y: yc };
+    }
+    // sinon : un autre vide à droite, plus bas
+    for (let y = yc; y < hero.clientHeight - 20; y += 4) {
+      const s1 = span(y, w * 0.5);
+      if (s1 && s1[1] - s1[0] >= 30) return { x: (s1[0] + s1[1]) / 2, y };
+    }
+    return null;
+  }
+
+  // Point du sol (repère local de `floor`) sous un point de l'écran, le rig étant dans sa pose de repos
+  // (sans le mouvement du pointeur ni le flottement). Renvoie false si le rayon manque le sol.
+  function gatherUnder(px, py, w, h) {
+    const keepPos = rig.position.clone();
+    const keepRot = rig.rotation.clone();
+    rig.position.set(layout.x, layout.y, 0);
+    rig.rotation.set(RIG_TILT.x, 0, RIG_TILT.z);
+    rig.updateMatrixWorld(true);
+    camera.updateMatrixWorld(true);
+    ray.setFromCamera(ndc.set((px / w) * 2 - 1, 1 - (py / h) * 2), camera);
+    const inv = floor.matrixWorld.clone().invert();
+    const o = ray.ray.origin.clone().applyMatrix4(inv);
+    const d = ray.ray.direction.clone().transformDirection(inv);
+    rig.position.copy(keepPos);
+    rig.rotation.copy(keepRot);
+    rig.updateMatrixWorld(true);
+    if (d.y > -1e-4) return false;
+    const t = -o.y / d.y;
+    if (!(t > 0)) return false; // derrière la caméra
+    GATHER.set(o.x + d.x * t, 0, o.z + d.z * t);
+    return true;
+  }
+
   function resize() {
     const view = layoutHero(hero, inner, N);
     renderer.setSize(hero.clientWidth, hero.clientHeight, false);
@@ -350,10 +423,18 @@ function init() {
     camera.lookAt(...view.target);
     camera.updateProjectionMatrix();
     layout = view.layout;
-    // empilé (téléphone), la caméra est proche : le point se forme juste sous l'écran, au-dessus du texte
-    if (view.stacked) GATHER.set(0, 0.32, R + 0.15);
-    else GATHER.set(0, 0, R + 1);
-    gatherSpan = view.stacked ? 0.2 : 0.32;
+    // empilé (téléphone, tablette portrait) : le point se forme en bas à droite du sol, dans le vide
+    // à droite du titre ; repli : juste sous l'écran de face
+    if (view.stacked) {
+      GATHER.set(0, 0.32, R + 0.15);
+      const w = hero.clientWidth;
+      const tg = stackedTarget(w);
+      if (tg) {
+        const keep = GATHER.clone();
+        if (!gatherUnder(tg.x, tg.y, w, hero.clientHeight)) GATHER.copy(keep);
+      }
+    } else GATHER.set(0, 0, R + 1);
+    gatherSpan = view.stacked ? 0.3 : 0.32;
     core.position.copy(GATHER);
     floorMat.uniforms.uFogNear.value = view.fog.near;
     floorMat.uniforms.uFogFar.value = view.fog.far;
