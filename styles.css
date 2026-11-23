@@ -1812,3 +1812,36 @@ mini…) : tout le hero tient dans l'écran */
     display: none;
   }
 }
+
+/* Le fil vert tracé par le point (dot.js) : dans la page, sous le header, sous le point */
+.scroll-thread {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 90;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.scroll-thread.is-on {
+  visibility: visible;
+}
+
+.nav-open .scroll-thread {
+  visibility: hidden;
+}
+
+.scroll-thread path {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.6;
+}
+
+@media print {
+  .scroll-thread {
+    display: none;
+  }
+}
