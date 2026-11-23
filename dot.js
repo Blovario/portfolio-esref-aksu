@@ -12,9 +12,13 @@ const smooth = (t) => t * t * (3 - 2 * t);
 const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
 
 export function createDot({ getVh }) {
-  const anchors = [...document.querySelectorAll(".project-kicker, #expertise-title, #contact-title")];
+  const anchors = [...document.querySelectorAll(".project-kicker, #expertise-title, .contact-dot")];
   if (!anchors.length) return null;
   const header = document.querySelector(".site-header");
+  const clock = document.querySelector(".contact-clock");
+  const lastI = anchors.length - 1; // dernier repère : le voyant de l'horloge du contact
+  const hasVoyant = anchors[lastI].classList.contains("contact-dot");
+  const nProjects = anchors.filter((a) => a.classList.contains("project-kicker")).length;
 
   const el = document.createElement("div");
   el.className = "scroll-dot";
@@ -54,7 +58,8 @@ export function createDot({ getVh }) {
       if (r.top < vh * 0.62) active = i;
     });
     const r = lines[active];
-    let x = Math.max(r.left - (size / 2 + 7 + r.height * 0.1), size / 2 + 3);
+    const voyant = hasVoyant && active === lastI; // cible : le centre du voyant, pas « à gauche du texte »
+    let x = voyant ? r.left + r.width / 2 : Math.max(r.left - (size / 2 + 7 + r.height * 0.1), size / 2 + 3);
     let y = r.top + r.height / 2;
     let travel = false;
 
@@ -72,9 +77,15 @@ export function createDot({ getVh }) {
       }
     }
 
-    const top = (header?.getBoundingClientRect().bottom || 0) + 18;
-    y = clamp(y, top, window.innerHeight - 26);
-    return { x, y, key: travel ? -1 : active };
+    // pas de bornage s'il vise le voyant tant que celui-ci n'est pas sous le bas de l'écran :
+    // rien ne doit le décoller (si le voyant remonte sous le header, le point le suit)
+    const vx = x;
+    const vy = y;
+    if (!(voyant && y <= window.innerHeight)) {
+      const top = (header?.getBoundingClientRect().bottom || 0) + 18;
+      y = clamp(y, top, window.innerHeight - 26);
+    }
+    return { x, y, key: travel ? -1 : active, vSize: voyant ? anchors[active].offsetWidth : 0, vx, vy };
   }
 
   // --- Mouvement ---
@@ -92,6 +103,26 @@ export function createDot({ getVh }) {
   let py = 0;
   let stretch = 0;
   let pulse = false;
+  let shrink = 1; // échelle du point (il rétrécit en approchant du voyant)
+  let fed = false; // fondu dans le voyant
+  let kind = undefined; // dernier état émis (dot:active)
+
+  // annonce le repère actif (compteur du header) ; kind : project | expertise | contact | travel | null
+  function announce(t) {
+    const k = !t ? null : t.key < 0 ? "travel" : t.key < nProjects ? "project" : t.key === nProjects ? "expertise" : "contact";
+    const index = !t || t.key < 0 ? null : t.key;
+    const sig = `${k}:${index}`;
+    if (sig === kind) return;
+    kind = sig;
+    document.dispatchEvent(new CustomEvent("dot:active", { detail: { index, kind: k } }));
+  }
+
+  function setFed(v) {
+    if (fed === v) return;
+    fed = v;
+    el.classList.toggle("is-fed", v);
+    clock?.classList.toggle("is-fed", v);
+  }
 
   function setOn(v) {
     if (on === v) return;
@@ -110,8 +141,10 @@ export function createDot({ getVh }) {
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
     const t = target();
+    announce(t);
     if (!t) {
       setOn(false);
+      setFed(false);
       prev = null;
       return;
     }
@@ -166,14 +199,24 @@ export function createDot({ getVh }) {
     const angle = Math.atan2(vy, vx);
 
     el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
-    body.style.transform =
-      stretch > 0.01 ? `rotate(${angle.toFixed(3)}rad) scale(${(1 + stretch).toFixed(3)}, ${(1 / (1 + stretch * 0.6)).toFixed(3)})` : "";
+
+    // vers le voyant : il rétrécit à sa taille selon la distance restante (lissé, donc sans saut au départ)
+    const dv = t.vSize ? Math.hypot(x - t.vx, y - t.vy) : Infinity;
+    const wantShrink = t.vSize ? 1 - (1 - t.vSize / size) * (1 - smooth(clamp(dv / 220, 0, 1))) : 1;
+    shrink += (wantShrink - shrink) * Math.min(dt * 12, 1);
+    if (Math.abs(shrink - wantShrink) < 0.002) shrink = wantShrink;
+
+    // posé sur le voyant : il s'y fond (hystérésis pour ne pas clignoter pendant un petit défilement)
+    setFed(t.vSize ? (fed ? dv < 14 : settled && dv < 1.5) : false);
+
+    const sq = stretch > 0.01 ? `rotate(${angle.toFixed(3)}rad) scale(${(1 + stretch).toFixed(3)}, ${(1 / (1 + stretch * 0.6)).toFixed(3)})` : "";
+    body.style.transform = shrink !== 1 ? `scale(${shrink.toFixed(3)}) ${sq}` : sq;
 
     if (settled && pulse) {
       pulse = false;
-      land();
+      if (!fed) land();
     }
-    if (!settled || stretch > 0.01 || now - lastScroll < 120) raf = requestAnimationFrame(tick);
+    if (!settled || stretch > 0.01 || shrink !== wantShrink || now - lastScroll < 120) raf = requestAnimationFrame(tick);
   }
 
   let lastScroll = 0;

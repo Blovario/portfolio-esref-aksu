@@ -205,6 +205,43 @@ ol {
   }
 }
 
+/* compteur de projet (script.js, piloté par dot:active) : à côté de « Projets » sur ordi, avant le bouton menu sur mobile */
+.header-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  margin-left: auto;
+  margin-right: clamp(1.4rem, 2.5vw, 2.75rem);
+  color: var(--muted-dark);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 250ms ease, visibility 250ms;
+}
+
+.header-count.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.header-roll {
+  position: relative;
+  display: inline-block;
+  width: 2ch;
+  height: 1.3em;
+  overflow: hidden;
+  color: var(--green);
+}
+
+.header-roll span {
+  position: absolute;
+  inset: 0;
+  line-height: 1.3em;
+  text-align: right;
+}
+
 .menu-toggle {
   display: none;
   position: relative;
@@ -975,6 +1012,15 @@ html:not(.has-scene) .hero-hint {
   animation: none;
 }
 
+/* le point vert vient de s'y fondre : petite absorption, puis un pulse plus marqué */
+.contact-clock.is-fed .contact-dot {
+  animation: contact-absorb 600ms cubic-bezier(0.3, 1.5, 0.5, 1), pulse-strong 2.4s ease-out 600ms infinite;
+}
+
+.contact-clock.is-night.is-fed .contact-dot {
+  animation: contact-absorb 600ms cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
 .contact-clock.is-night::after {
   content: "· je dors sûrement, je réponds demain";
 }
@@ -982,6 +1028,17 @@ html:not(.has-scene) .hero-hint {
 @keyframes pulse {
   70% { box-shadow: 0 0 0 0.6rem rgba(122, 181, 64, 0); }
   100% { box-shadow: 0 0 0 0 rgba(122, 181, 64, 0); }
+}
+
+@keyframes pulse-strong {
+  0% { box-shadow: 0 0 0 0 rgba(122, 181, 64, 0.85); }
+  70% { box-shadow: 0 0 0 0.9rem rgba(122, 181, 64, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(122, 181, 64, 0); }
+}
+
+@keyframes contact-absorb {
+  from { transform: scale(1.8); }
+  to { transform: scale(1); }
 }
 
 .contact h2 {
@@ -1361,6 +1418,10 @@ html:not(.has-scene) .hero-hint {
     display: block;
   }
 
+  .header-count {
+    margin-right: 0.25rem;
+  }
+
   .menu-toggle[aria-expanded="true"] span:first-child {
     top: 1.35rem;
     transform: rotate(45deg);
@@ -1661,6 +1722,15 @@ mini…) : tout le hero tient dans l'écran */
 
 .nav-open .scroll-dot {
   visibility: hidden;
+}
+
+/* fondu dans le voyant de l'horloge du contact */
+.scroll-dot {
+  transition: opacity 180ms ease;
+}
+
+.scroll-dot.is-fed {
+  opacity: 0;
 }
 
 .scroll-dot b {

@@ -185,4 +185,56 @@ document.documentElement.classList.add("js");
       }
     }
   });
+  // Compteur de projet du header : suit le repère actif du point vert (événement dot:active de dot.js).
+  // Sans effet si l'événement n'arrive jamais (mouvements réduits : le point n'existe pas).
+  const headerCount = document.querySelector(".header-count");
+  const countRoll = headerCount ? [...headerCount.querySelectorAll(".header-roll span")] : [];
+
+  if (headerCount && countRoll.length === 2) {
+    const total = document.querySelectorAll(".project-kicker").length;
+    const pad = (n) => String(n).padStart(2, "0");
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    headerCount.querySelector(".header-total").textContent = pad(total);
+    let shown = countRoll[0];
+    let hidden = countRoll[1];
+    let current = 0;
+    let token = 0;
+    hidden.style.visibility = "hidden";
+
+    document.addEventListener("dot:active", (e) => {
+      const { index, kind } = e.detail || {};
+      const isProject = kind === "project" && index >= 0 && index < total;
+      headerCount.classList.toggle("is-visible", isProject);
+      if (!isProject) return;
+      const n = index + 1;
+      if (n === current) return;
+      const from = current;
+      current = n;
+      if (!from || reduced.matches) {
+        shown.textContent = pad(n);
+        return;
+      }
+      // l'ancien chiffre sort vers le haut, le nouveau entre par le bas (sens inverse en remontant)
+      const dir = n > from ? 1 : -1;
+      const mine = ++token;
+      countRoll.forEach((c) => c.getAnimations().forEach((a) => a.cancel()));
+      hidden.textContent = pad(n);
+      hidden.style.visibility = "";
+      const opts = { duration: 350, easing: "cubic-bezier(0.5, 0, 0.2, 1)", fill: "forwards" };
+      const out = shown;
+      const incoming = hidden;
+      out.animate([{ transform: "none" }, { transform: `translateY(${-dir * 100}%)` }], opts);
+      incoming.animate([{ transform: `translateY(${dir * 100}%)` }, { transform: "none" }], opts).finished.then(
+        () => {
+          if (mine !== token) return;
+          out.getAnimations().forEach((a) => a.cancel());
+          incoming.getAnimations().forEach((a) => a.cancel());
+          out.style.visibility = "hidden";
+        },
+        () => {}
+      );
+      shown = incoming;
+      hidden = out;
+    });
+  }
 })();
