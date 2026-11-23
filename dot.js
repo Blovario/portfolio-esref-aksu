@@ -13,21 +13,64 @@ const smooth = (t) => t * t * (3 - 2 * t);
 const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
 
 
-// Nœud tracé à chaque numéro : boucle de cycloïde allongée, le fil entre et sort à la verticale.
-// Points relatifs au centre de la boucle (le fil descend à gauche de celui-ci).
-const LOOP = (() => {
-  const a = 3, b = 10, sv = 1.6; // sv : étire la boucle pour qu'elle soit ronde
-  let ps = Math.PI / 2;
-  for (let i = 0; i < 40; i++) ps -= (a * ps - b * Math.sin(ps)) / (a - b * Math.cos(ps)); // croisement
-  const raw = [];
-  for (let k = 0; k <= 48; k++) {
-    const p = -Math.PI + (2 * Math.PI * k) / 48;
-    raw.push([a * p - b * Math.sin(p), -b * Math.cos(p), Math.abs(p) <= ps]);
+// Cercle tracé au stylo autour du numéro d'un projet (« 01 », « 04 »…) : ellipse un peu inclinée,
+// qui part de son point le plus à gauche (le fil y arrive à la verticale), fait un tour, puis dépasse
+// son début d'une vingtaine de degrés avec un rayon qui grandit : la fin passe à l'extérieur du début.
+const TILT = (-8 * Math.PI) / 180; // légèrement inclinée, comme un geste de poignet
+const OVER = (19 * Math.PI) / 180; // dépassement de la fin sur le début
+const RING_N = 26; // nombre de cubiques
+function ring(cx, cy, a, b, SQ) {
+  // SQ : exposant de la forme (1 = ellipse ; plus bas = plus carrée, quand le numéro est à l'étroit)
+  // sens anti-horaire à l'écran ; u : avancement 0..1
+  let th0 = Math.PI;
+  const sweep = 2 * Math.PI + OVER;
+  const at = (u) => {
+    const th = th0 + sweep * u;
+    const s = 0.93 + 0.2 * u + 0.022 * Math.sin(2 * th + 0.8); // petite variation de rayon
+    const c = Math.cos(th);
+    const sn = Math.sin(th);
+    const ex = a * s * Math.sign(c) * Math.abs(c) ** SQ; // légèrement plus carré qu'une ellipse
+    const ey = -b * s * Math.sign(sn) * Math.abs(sn) ** SQ;
+    return [cx + ex * Math.cos(TILT) - ey * Math.sin(TILT), cy + ex * Math.sin(TILT) + ey * Math.cos(TILT)];
+  };
+  // départ au point le plus à gauche de l'ellipse inclinée : la tangente y est verticale
+  let best = Infinity;
+  let thL = th0;
+  for (let k = -60; k <= 60; k++) {
+    th0 = Math.PI + (k * Math.PI) / 360;
+    const x = at(0)[0];
+    if (x < best) {
+      best = x;
+      thL = th0;
+    }
   }
-  const ws = raw.filter((r) => r[2]).map((r) => r[1]);
-  const wc = (Math.min(...ws) + Math.max(...ws)) / 2;
-  return raw.map(([u, w]) => [(wc - w) * 1.4, u * sv]); // [dx, dy]
-})();
+  th0 = thL;
+  const segs = [];
+  const e = 1e-4;
+  const der = (u) => {
+    const p = at(Math.min(u + e, 1 + e));
+    const q = at(u - e);
+    return [(p[0] - q[0]) / (2 * e), (p[1] - q[1]) / (2 * e)];
+  };
+  for (let k = 0; k < RING_N; k++) {
+    const u0 = k / RING_N;
+    const u1 = (k + 1) / RING_N;
+    const p0 = at(u0);
+    const p1 = at(u1);
+    const d0 = der(u0);
+    const d1 = der(u1);
+    const h = (u1 - u0) / 3;
+    segs.push([p0[0] + d0[0] * h, p0[1] + d0[1] * h, p1[0] - d1[0] * h, p1[1] - d1[1] * h, p1[0], p1[1]]);
+  }
+  const end = at(1);
+  const t1 = der(1);
+  const n = Math.hypot(t1[0], t1[1]);
+  const pts = [];
+  for (let k = 0; k <= 120; k++) pts.push(at(k / 120));
+  return { start: at(0), segs, end, tan: [t1[0] / n, t1[1] / n], pts };
+}
+
+const KAPPA = 0.5523; // quart d'ellipse en cubique
 
 export function createDot({ getVh }) {
   const anchors = [...document.querySelectorAll(".project-kicker, #expertise-title, .contact-dot")];
@@ -60,7 +103,6 @@ export function createDot({ getVh }) {
   const path = document.createElementNS(NS, "path");
   svg.appendChild(path);
   document.body.appendChild(svg);
-  const probe = document.createElementNS(NS, "path"); // pour mesurer des tronçons du tracé
 
   // première ligne de texte de chaque repère (le bloc peut être plus large que le texte)
   const ranges = anchors.map((a) => {
@@ -81,7 +123,6 @@ export function createDot({ getVh }) {
   let dirty = true; // la page a bougé : tracé à recalculer
 
   // --- Tracé (coordonnées de la page) ---
-  const STEP = 4; // pas d'échantillonnage (px de longueur)
   let G = null; // { L, n, len, px, py, maxY, ends, marks, first }
 
   function compute() {
@@ -91,77 +132,291 @@ export function createDot({ getVh }) {
     const sx = window.scrollX;
     const sy = window.scrollY;
     const mob = window.innerWidth <= 800;
-    const sc = mob ? 0.5 : 1; // boucle plus petite sur mobile (marge étroite)
-    const loopHalf = LOOP[0][1] * -sc; // demi-hauteur de la boucle
-    const xl = LOOP[0][0] * sc; // décalage du fil par rapport au centre de la boucle
+    const Wd = document.documentElement.clientWidth;
+    // rectangle en coordonnées de la PAGE, à la place finale des blocs [data-reveal]
+    const box = (e) => {
+      const r = e.getBoundingClientRect();
+      const dy = revealDy(e);
+      return { l: r.left + sx, r: r.right + sx, t: r.top + sy - dy, b: r.bottom + sy - dy };
+    };
+    const textBox = (rg, dy) => {
+      const q = rg.getBoundingClientRect();
+      return { l: q.left + sx, r: q.right + sx, t: q.top + sy - dy, b: q.bottom + sy - dy };
+    };
 
-    // points de passage : { x, y, pass (hauteur de traversée après lui), loop }
-    const wp = [{ x: source.x, y: source.y, pass: hero.getBoundingClientRect().bottom + sy - 1 }];
-    anchors.forEach((a, i) => {
+    // repères : position, colonnes de descente du fil, cercle éventuel
+    const items = anchors.map((a, i) => {
+      const dy = revealDy(a);
       const r = lineOf(i);
-      const top = r.top + sy - revealDy(a);
+      const top = r.top + sy - dy;
       const left = r.left + sx;
-      const y = top + r.height / 2;
-      const isK = a.classList.contains("project-kicker");
-      const voyant = hasVoyant && i === lastI;
-      let x = voyant ? left + r.width / 2 : Math.max(left - (size / 2 + 7 + r.height * 0.1), size / 2 + 3);
-      let cx = x;
-      if (isK) {
-        cx = Math.max(x, 4 - xl); // le fil ne sort pas de la page
-        x = cx + xl;
+      const it = { cy: top + r.height / 2, top, kicker: a.classList.contains("project-kicker") };
+      it.voyant = hasVoyant && i === lastI;
+      if (it.voyant) {
+        it.inX = it.outX = left + r.width / 2;
+      } else if (!it.kicker) {
+        it.inX = it.outX = Math.max(left - (size / 2 + 7 + r.height * 0.1), size / 2 + 3);
+        it.bottom = a.closest(".shell")?.lastElementChild ? box(a.closest(".shell").lastElementChild).b : it.cy;
+        // la ligne « Avant … » qui clôt la section projets : on traverse au-dessus d'elle
+        const wb = document.querySelector(".work-before");
+        if (wb) it.top = Math.min(it.top, box(wb).t);
+      } else {
+        const proj = a.closest(".project");
+        const m = box(proj.querySelector(".project-media"));
+        const c = box(proj.querySelector(".project-copy"));
+        it.stacked = c.t >= m.b - 2; // mobile : la capture, puis le texte dessous
+        it.m = m;
+        it.top = Math.min(m.t, c.t);
+        it.bottom = Math.max(m.b, c.b);
+        // les deux chiffres, et le premier caractère visible qui les suit
+        const t = a.firstChild;
+        let dr = null;
+        let lim = Infinity;
+        if (t && t.nodeType === 3 && t.length >= 3) {
+          const rg = document.createRange();
+          rg.setStart(t, 0);
+          rg.setEnd(t, 2);
+          dr = textBox(rg, dy);
+          for (let k = 2; k < Math.min(t.length, 8); k++) {
+            if (/\s/.test(t.data[k])) continue;
+            rg.setStart(t, k);
+            rg.setEnd(t, k + 1);
+            lim = textBox(rg, dy).l;
+            break;
+          }
+        } else {
+          dr = { l: left, r: left + 16, t: top, b: top + r.height };
+        }
+        // ellipse : demi-axes ~ chiffres + 7 px / 6 px, ajustée pour ne toucher ni les chiffres,
+        // ni le caractère qui suit, ni le titre juste dessous
+        const nx = a.nextElementSibling;
+        let nextTop = Infinity;
+        if (nx) {
+          const rg2 = document.createRange();
+          rg2.selectNodeContents(nx);
+          const q0 = rg2.getClientRects()[0];
+          if (q0) nextTop = q0.top + sy - dy;
+        }
+        // marge de 7 px à gauche pour que le disque et le trait ne soient jamais coupés par le bord
+        let a2 = Math.min((dr.r - dr.l) / 2 + 7, (lim - 3.4 - 7) / 2.21);
+        const botT = Math.min(dr.b + 6.5, nextTop - 3.6); // bas du cercle
+        const topT = dr.t - 6.5; // haut du cercle
+        let b2 = (botT - topT) / 2;
+        let cx = (dr.l + dr.r) / 2;
+        cx -= Math.max(0, cx + a2 * 1.04 - (lim - 3.3)); // sans toucher le caractère suivant
+        cx = Math.max(cx, a2 * 1.16 + 7); // ni sortir de la page
+        let cy = (topT + botT) / 2;
+        let rg0 = null;
+        // ellipse d'abord ; si les coins des chiffres sont trop près, la forme devient plus carrée
+        for (const sq of [1, 0.9, 0.8, 0.7, 0.62, 0.55, 0.5]) {
+          let md = 0;
+          for (let k = 0; k < 10; k++) {
+            rg0 = ring(cx, cy, a2, b2, sq);
+            let ymax = -Infinity;
+            let xmax = -Infinity;
+            md = Infinity;
+            for (const [px, py] of rg0.pts) {
+              ymax = Math.max(ymax, py);
+              xmax = Math.max(xmax, px);
+              md = Math.min(md, Math.hypot(Math.max(dr.l - px, 0, px - dr.r), Math.max(dr.t - py, 0, py - dr.b)));
+            }
+            const ex = xmax - (lim - 3.4); // ne déborde pas sur le caractère suivant
+            if (ex > 0.2) {
+              cx -= ex;
+              const xmin = Math.min(...rg0.pts.map((q) => q[0])) - ex;
+              if (xmin < 7) {
+                // plus de place à gauche (bord de la page) : le cercle se resserre
+                a2 -= (7 - xmin) / 2;
+                cx += (7 - xmin) / 2;
+              }
+              continue;
+            }
+            if (Math.abs(ymax - botT) < 0.3) break;
+            cy -= (ymax - botT) * 0.9; // cale le bas du cercle
+          }
+          if (md >= 3.6) break;
+        }
+        it.cy = (dr.t + dr.b) / 2 - 0.5; // repère de lecture : milieu des chiffres
+        it.ring = rg0;
+        it.b2 = b2;
+        if (it.stacked) {
+          // le fil arrive par la marge droite, repart par la marge gauche
+          it.inX = Wd - Math.max(10, (Wd - c.r) / 2);
+          it.outX = Math.max(10, c.l / 2);
+        } else if (c.l > m.l) {
+          it.inX = it.outX = (m.r + c.l) / 2; // texte à droite : gouttière entre la capture et lui
+        } else {
+          it.inX = it.outX = Math.max(10, c.l / 2); // texte à gauche : marge de la page
+        }
       }
-      const box = a.closest(".project") || a.closest("section");
-      const pass = box ? box.getBoundingClientRect().bottom + sy - revealDy(box) - 1 : y;
-      wp.push({ x, y, cx, pass, loop: isK });
+      return it;
     });
 
     const f = (v) => v.toFixed(1);
-    let d = `M${f(wp[0].x)} ${f(wp[0].y)}`;
-    const ends = [];
-    const vline = (x, y1, y2) => {
-      if (!mob || y2 - y1 < 160) return (d += `L${f(x)} ${f(y2)}`);
-      // sur mobile : très légère ondulation, comme tracée à la main
+    let d = "";
+    let cx0 = source.x;
+    let cy0 = source.y;
+    // le tracé est aussi échantillonné ici (longueur cumulée, y) : getPointAtLength serait trop lent
+    const xs = [];
+    const ys = [];
+    const cum = [];
+    const add = (x, y) => {
+      const k = xs.length;
+      xs.push(x);
+      ys.push(y);
+      cum.push(k ? cum[k - 1] + Math.hypot(x - xs[k - 1], y - ys[k - 1]) : 0);
+    };
+    const M = (x, y) => {
+      d += `M${f(x)} ${f(y)}`;
+      cx0 = x;
+      cy0 = y;
+      add(x, y);
+    };
+    const Lt = (x, y) => {
+      d += `L${f(x)} ${f(y)}`;
+      add(x, y);
+      cx0 = x;
+      cy0 = y;
+    };
+    const Cb = (x1, y1, x2, y2, x, y) => {
+      d += `C${f(x1)} ${f(y1)} ${f(x2)} ${f(y2)} ${f(x)} ${f(y)}`;
+      for (let k = 1; k <= 12; k++) {
+        const t = k / 12;
+        const u = 1 - t;
+        const a = u * u * u;
+        const b = 3 * u * u * t;
+        const c = 3 * u * t * t;
+        const e = t * t * t;
+        add(a * cx0 + b * x1 + c * x2 + e * x, a * cy0 + b * y1 + c * y2 + e * y);
+      }
+      cx0 = x;
+      cy0 = y;
+    };
+    // descente verticale jusqu'à y2 ; sur mobile, très légère ondulation comme tracée à la main
+    const vline = (y2) => {
+      const x = cx0;
+      const y1 = cy0;
+      if (y2 <= y1 + 0.5) return;
+      if (!mob || y2 - y1 < 160) return Lt(x, y2);
       const n = Math.round((y2 - y1) / 100);
       let px = x;
       for (let k = 1; k <= n; k++) {
         const y0 = y1 + ((y2 - y1) * (k - 1)) / n;
         const y = y1 + ((y2 - y1) * k) / n;
-        const nx = k === n ? x : x + 2 * Math.sin(y * 0.017 + 1.3);
-        d += `C${f(px)} ${f((y0 + y) / 2)} ${f(nx)} ${f((y0 + y) / 2)} ${f(nx)} ${f(y)}`;
+        const nx = k === n ? x : x + 1.5 * Math.sin(y * 0.017 + 1.3);
+        Cb(px, (y0 + y) / 2, nx, (y0 + y) / 2, nx, y);
         px = nx;
       }
     };
-    for (let k = 0; k < wp.length - 1; k++) {
-      const A = wp[k];
-      const B = wp[k + 1];
-      const yA = k === 0 ? A.y : A.loop ? A.y + loopHalf : A.y;
-      const yB = B.loop ? B.y - loopHalf : B.y;
-      const dx = B.x - A.x;
-      const pass = Math.max(A.pass, yA + 20);
-      if (Math.abs(dx) < 1.5 || pass > yB - 20) {
-        vline(A.x, yA, yB);
-      } else {
-        const sg = Math.sign(dx);
-        const r = Math.min(40, Math.abs(dx) / 2, (pass - yA) / 2, (yB - pass) / 2);
-        vline(A.x, yA, pass - r);
-        d += `Q${f(A.x)} ${f(pass)} ${f(A.x + sg * r)} ${f(pass)}L${f(B.x - sg * r)} ${f(pass)}Q${f(B.x)} ${f(pass)} ${f(B.x)} ${f(pass + r)}`;
-        vline(B.x, pass + r, yB);
+    // traversée en S : descend, part sur le côté en quart d'ellipse, traverse à hauteur yMid, redescend
+    const zig = (x2, yMid, ry1, ry2) => {
+      const dx = x2 - cx0;
+      if (Math.abs(dx) < 1.5) return;
+      const sg = Math.sign(dx);
+      const rx = Math.abs(dx) / 2;
+      vline(yMid - ry1);
+      const x1 = cx0;
+      Cb(x1, cy0 + KAPPA * ry1, x1 + sg * rx * (1 - KAPPA), yMid, x1 + sg * rx, yMid);
+      Cb(x2 - sg * rx * (1 - KAPPA), yMid, x2, yMid + ry2 - KAPPA * ry2, x2, yMid + ry2);
+    };
+
+    // même traversée dans un espace étroit : coins ronds et course presque droite
+    // (un quart d'ellipse large et plat ferait un angle sec au bord de l'écran)
+    const run = (x2, yMid, r1, r2) => {
+      const x1 = cx0;
+      const sg = Math.sign(x2 - x1);
+      vline(yMid - r1);
+      Cb(cx0, cy0 + KAPPA * r1, x1 + sg * r1 * (1 - KAPPA), yMid, x1 + sg * r1, yMid);
+      const xa = cx0;
+      const xb = x2 - sg * r2;
+      const third = (xb - xa) / 3;
+      Cb(xa + third, yMid, xb - third, yMid, xb, yMid);
+      Cb(xb + sg * r2 * KAPPA, yMid, x2, yMid + r2 * (1 - KAPPA), x2, yMid + r2);
+    };
+
+    // --- premier tronçon : de la source du hero jusqu'au premier repère, sans toucher au texte ---
+    const heroBottom = hero.getBoundingClientRect().bottom + sy - 1;
+    const first = items[0];
+    M(source.x, source.y);
+    if (mob) {
+      // à droite, dans l'espace libre au-dessus de .hero-tag, puis dans la marge droite
+      const tag = document.querySelector(".hero-tag");
+      const tagTop = tag ? box(tag).t : source.y + 40;
+      const xR = first.inX;
+      const yRun = Math.max(Math.min(source.y + 16, tagTop - 14), source.y);
+      const rx = Math.min(80, Math.max(20, (xR - source.x) / 2));
+      const ry = 40;
+      const ax = xR - rx;
+      const dxA = ax - source.x;
+      Cb(source.x + 0.4 * dxA, source.y + 0.1 * (yRun - source.y), ax - 0.4 * dxA, yRun, ax, yRun);
+      Cb(ax + KAPPA * rx, yRun, xR, yRun + ry - KAPPA * ry, xR, yRun + ry);
+    } else {
+      // à gauche du « Glissez pour tourner », qui est sous le point
+      const hint = document.querySelector(".hero-hint");
+      let xH = source.x;
+      if (hint) {
+        const hb = box(hint);
+        if (hb.b > source.y && hb.r > source.x - 40) xH = Math.min(xH, hb.l - 55);
       }
-      if (B.loop) {
-        for (const [lx, ly] of LOOP) d += `L${f(B.cx + lx * sc)} ${f(B.y + ly * sc)}`;
-        ends[k] = d; // le nœud est fermé ici
+      if (Math.abs(xH - source.x) > 1.5) {
+        const yH = source.y + 80;
+        const k = 0.55 * (yH - source.y);
+        Cb(source.x, source.y + k, xH, yH - k, xH, yH);
       }
     }
+
+    // --- repère par repère ---
+    const ends = [];
+    let prevBottom = heroBottom;
+    items.forEach((it, i) => {
+      // traversée jusqu'à la colonne d'arrivée, entre la fin du bloc précédent et le début de celui-ci
+      const gap = it.top - prevBottom;
+      if (it.voyant) {
+        const ry = Math.max(0, Math.min(40, gap / 2 - 8));
+        zig(it.inX, (prevBottom + it.top) / 2, ry, ry);
+        vline(it.cy);
+      } else {
+        const ry = Math.max(0, Math.min(mob ? 60 : 110, gap / 2 - 12));
+        zig(it.inX, (prevBottom + it.top) / 2, ry, ry);
+        if (!it.kicker) vline(it.cy);
+      }
+      if (it.kicker) {
+        // approche du cercle : arrive au point le plus à gauche, à la verticale
+        const S = it.ring.start;
+        if (it.stacked) {
+          // sous la capture : course souple de la marge droite vers la gauche
+          const topC = Math.min(...it.ring.pts.map((q) => q[1]));
+          const yMid = (it.m.b + topC) / 2;
+          const ry1 = Math.max(4, Math.min(24, yMid - it.m.b + 12)); // l'arrondi peut commencer dans la marge, à côté du bas de la capture
+          const ry2 = Math.max(4, Math.min(24, S[1] - 2 - yMid));
+          run(S[0], yMid, ry1, ry2);
+        } else {
+          // de la gouttière au cercle : une seule courbe, sans décrochement
+          const h = clamp(S[1] - cy0, 10, 120);
+          vline(S[1] - h);
+          Cb(cx0, cy0 + h * 0.5, S[0], S[1] - h * 0.5, S[0], S[1]);
+        }
+        Lt(S[0], S[1]);
+        for (const s of it.ring.segs) Cb(...s);
+        ends[i] = xs.length - 1; // le cercle est fermé ici
+        // sortie : repart vers le bas par la marge ou la gouttière, sans repasser sur le texte
+        const E = it.ring.end;
+        const T = it.ring.tan;
+        const yo = E[1] + (it.stacked ? 60 : 90);
+        Cb(E[0] + T[0] * 26, E[1] + T[1] * 26, it.outX, yo - 36, it.outX, yo);
+      }
+      prevBottom = it.bottom ?? it.cy;
+    });
     path.setAttribute("d", d);
     const L = path.getTotalLength();
-    const n = Math.ceil(L / STEP) + 1;
+    const n = xs.length;
+    const kL = L / (cum[n - 1] || 1); // les longueurs du navigateur font foi
     const len = new Float32Array(n);
     const maxY = new Float32Array(n);
     let m = -Infinity;
     for (let i = 0; i < n; i++) {
-      len[i] = Math.min(i * STEP, L);
-      const p = path.getPointAtLength(len[i]);
-      m = Math.max(m, p.y);
+      len[i] = cum[i] * kL;
+      m = Math.max(m, ys[i]);
       maxY[i] = m;
     }
     const W = Math.max(document.documentElement.clientWidth, document.body.scrollWidth);
@@ -181,17 +436,15 @@ export function createDot({ getVh }) {
         if (maxY[mid] >= line) hi = mid;
         else lo = mid + 1;
       }
-      return len[lo];
+      if (lo === 0 || maxY[lo] === maxY[lo - 1]) return len[lo];
+      return len[lo - 1] + ((line - maxY[lo - 1]) / (maxY[lo] - maxY[lo - 1])) * (len[lo] - len[lo - 1]);
     };
-    // repères : longueur à partir de laquelle chacun est « dépassé » ; fins de nœuds pour l'anneau
-    G2.marks = wp.slice(1).map((w, i) => (hasVoyant && i === lastI ? L - 1 : G2.at(w.y)));
+    // repères : longueur à partir de laquelle chacun est « dépassé » ; fins de cercles pour l'anneau
+    G2.marks = items.map((it, i) => (it.voyant ? L - 1 : G2.at(it.cy)));
     G2.ends = [];
-    ends.forEach((s, k) => {
-      probe.setAttribute("d", s);
-      G2.ends.push(probe.getTotalLength());
-    });
+    ends.forEach((k) => G2.ends.push(len[k]));
     G2.first = G2.marks[0];
-    G2.firstY = wp[1].y;
+    G2.firstY = items[0].cy;
     G = G2;
     lenS = Math.min(lenS, L);
   }
@@ -203,9 +456,10 @@ export function createDot({ getVh }) {
     const arrive = G.firstY - vh * 0.62;
     if (sy < arrive) {
       const e = smooth(clamp((sy - handoff) / (arrive - handoff), 0, 1));
-      const lo = G.at(sy + 110);
+      const lo = G.at(sy + 125);
       const hi = G.at(sy + vh - 40);
-      return clamp(G.first * e, Math.min(lo, G.first * e), hi);
+      // jamais sous le header (lo) ni sous le bas de l'écran (hi)
+      return clamp(G.first * e, lo, hi);
     }
     // ensuite : la pointe suit la ligne de lecture
     return G.at(line);
@@ -295,7 +549,8 @@ export function createDot({ getVh }) {
         lenS += vel * h;
       }
     }
-    lenS = clamp(lenS, 0, G.L);
+    // le point reste toujours entre le bas du header et le bas de l'écran, même si le ressort a du retard
+    lenS = clamp(lenS, clamp(G.at(sy + 96), 0, G.L), Math.max(G.at(sy + vh - 24), G.at(sy + 96)));
     const settled = Math.abs(tl - lenS) < 0.3 && Math.abs(vel) < 4;
     if (settled) {
       lenS = tl;

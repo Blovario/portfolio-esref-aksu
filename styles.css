@@ -714,10 +714,11 @@ html:not(.has-scene) .hero-hint {
 
 .project-kicker {
   color: var(--muted);
+  word-spacing: 0.2em; /* laisse la place au cercle que le fil trace autour du numéro (dot.js) */
 }
 
 .project h3 {
-  margin-top: 0.7rem;
+  margin-top: 0.95rem;
   font-family: var(--display);
   font-stretch: 72%;
   font-size: clamp(2.5rem, 4.2vw, 4.2rem);
